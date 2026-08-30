@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #08090E;
+  color: #FFFFFF;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  overflow-x: clip;
+}
+
+/* Comic halftone dot background */
+.comic-halftone {
+  background-image: radial-gradient(rgba(226, 54, 54, 0.15) 1px, transparent 0);
+  background-size: 16px 16px;
+}
+
+.comic-halftone-blue {
+  background-image: radial-gradient(rgba(0, 180, 216, 0.12) 1.5px, transparent 0);
+  background-size: 14px 14px;
+}
+
+.comic-dots-pattern {
+  background-image: radial-gradient(#2a2d3d 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+/* Speed lines effect */
+.speed-lines {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 40px,
+    rgba(255, 255, 255, 0.03) 40px,
+    rgba(255, 255, 255, 0.03) 42px
+  );
+}
+
+/* Marvel-style comic text glow & drop shadow */
+.comic-title {
+  font-family: 'Bangers', cursive, sans-serif;
+  text-shadow: 
+    3px 3px 0px #000000,
+    -1px -1px 0px #000000,
+    1px -1px 0px #000000,
+    -1px 1px 0px #000000,
+    1px 1px 0px #000000,
+    4px 4px 15px rgba(226, 54, 54, 0.6);
+  letter-spacing: 2px;
+}
+
+.comic-bubble {
+  filter: drop-shadow(4px 4px 0px #000000);
+}
+
+.glow-spidey-red {
+  filter: drop-shadow(0 0 16px rgba(230, 36, 41, 0.6));
+}
+
+.glow-spidey-blue {
+  filter: drop-shadow(0 0 16px rgba(0, 180, 216, 0.5));
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #08090E;
+}
+::-webkit-scrollbar-thumb {
+  background: #E62429;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #F3D403;
+}
+
+/* Spider-Sense Ring Animation */
+@keyframes sensePulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.spider-sense-ring {
+  animation: sensePulse 1.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+}
