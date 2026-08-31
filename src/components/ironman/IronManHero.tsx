@@ -33,6 +33,9 @@ export const IronManHero: React.FC = () => {
       img.onerror = () => {
         count++;
         setLoadedCount(count);
+        if (count >= TOTAL_FRAMES) {
+          setIsReady(true);
+        }
       };
       images.push(img);
     }
@@ -125,7 +128,7 @@ export const IronManHero: React.FC = () => {
   const introOpacity = Math.max(0, 1 - scrollRatio / 0.12);
 
   return (
-    <section ref={containerRef} className="relative w-full h-[400vh] bg-[#0A0A0B]">
+    <section id="ironman-hero" ref={containerRef} className="relative w-full h-[400vh] bg-[#0A0A0B]">
       {/* STICKY FULLSCREEN VIEWPORT */}
       <div className="sticky top-0 w-full h-screen overflow-hidden bg-[#0A0A0B] will-change-transform">
         {/* Main 3D Sequence Canvas */}

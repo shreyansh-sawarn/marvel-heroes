@@ -4,6 +4,7 @@ class SoundEngine {
   private isMuted: boolean = false;
   private lastWhooshTime: number = 0;
   private lastThwipTime: number = 0;
+  private lastRepulsorTime: number = 0;
 
   private initContext() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -59,7 +60,7 @@ class SoundEngine {
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
 
     // Noise burst for the pneumatic piston hiss
-    const bufferSize = this.ctx.sampleRate * 0.08;
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.08);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -81,6 +82,99 @@ class SoundEngine {
     osc.start(t);
     osc.stop(t + 0.15);
     noise.start(t);
+  }
+
+  // Iron Man Repulsor Blast (High pitch charge + shockwave burst)
+  public playRepulsor() {
+    if (this.isMuted) return;
+    const now = Date.now();
+    if (now - this.lastRepulsorTime < 350) return;
+    this.lastRepulsorTime = now;
+
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+
+    // High frequency charge tone
+    const chargeOsc = this.ctx.createOscillator();
+    const chargeGain = this.ctx.createGain();
+    chargeOsc.type = 'sine';
+    chargeOsc.frequency.setValueAtTime(400, t);
+    chargeOsc.frequency.exponentialRampToValueAtTime(2800, t + 0.12);
+
+    chargeGain.gain.setValueAtTime(0.05, t);
+    chargeGain.gain.linearRampToValueAtTime(0.25, t + 0.1);
+    chargeGain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+
+    chargeOsc.connect(chargeGain);
+    chargeGain.connect(this.ctx.destination);
+
+    chargeOsc.start(t);
+    chargeOsc.stop(t + 0.15);
+
+    // Deep plasma punch explosion
+    const boomOsc = this.ctx.createOscillator();
+    const boomGain = this.ctx.createGain();
+    boomOsc.type = 'triangle';
+    boomOsc.frequency.setValueAtTime(240, t + 0.1);
+    boomOsc.frequency.exponentialRampToValueAtTime(30, t + 0.45);
+
+    boomGain.gain.setValueAtTime(0, t);
+    boomGain.gain.setValueAtTime(0.45, t + 0.1);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+    boomOsc.connect(boomGain);
+    boomGain.connect(this.ctx.destination);
+
+    boomOsc.start(t + 0.1);
+    boomOsc.stop(t + 0.52);
+  }
+
+  // Tactical HUD Chirp / Click
+  public playHudClick() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2200, t);
+    osc.frequency.setValueAtTime(3300, t + 0.03);
+
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.08);
+  }
+
+  // Hero Switch Power Surge
+  public playHeroSwitch() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    [440, 660, 880, 1320].forEach((freq, i) => {
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t + i * 0.05);
+      gain.gain.setValueAtTime(0.08, t + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.05 + 0.2);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t + i * 0.05);
+      osc.stop(t + i * 0.05 + 0.22);
+    });
   }
 
   // Spider-Sense Tingle (Eerie harmonic chime)
@@ -126,7 +220,7 @@ class SoundEngine {
     const t = this.ctx.currentTime;
     const dur = 0.35 / Math.max(0.5, speedMultiplier);
 
-    const bufferSize = this.ctx.sampleRate * dur;
+    const bufferSize = Math.floor(this.ctx.sampleRate * dur);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {

@@ -12,7 +12,7 @@ export const SpidermanCinematicChapter: React.FC = () => {
 
   useEffect(() => {
     const leap = new Image();
-    leap.src = '/assets/scene_leap_16x9.jpg';
+    leap.src = '/assets/spidey_leap_raw.jpg';
     leap.onload = () => {
       leapImgRef.current = leap;
       setIsReady(true);
@@ -37,7 +37,7 @@ export const SpidermanCinematicChapter: React.FC = () => {
 
     ctx.clearRect(0, 0, w, h);
 
-    // 16:9 Widescreen dive zoom
+    // Single unified photo dive zoom
     const leap = leapImgRef.current;
     if (leap && leap.complete) {
       const zoom = 1.0 + p * 0.08;
@@ -49,7 +49,7 @@ export const SpidermanCinematicChapter: React.FC = () => {
       ctx.rotate(rot);
       ctx.scale(zoom, zoom);
 
-      const imgAspect = leap.naturalWidth / leap.naturalHeight; // 1920 / 1080
+      const imgAspect = leap.naturalWidth / leap.naturalHeight;
       const canvasAspect = w / h;
       let drawW = w;
       let drawH = h;
@@ -170,9 +170,9 @@ export const SpidermanCinematicChapter: React.FC = () => {
         </div>
 
         {/* Top Right Title — Dual Morph */}
-        <div className="pointer-events-none absolute right-6 top-24 z-10 flex max-w-[46ch] flex-col items-end gap-3 text-right md:right-12 md:top-28">
+        <div className="pointer-events-none absolute right-6 top-20 z-10 flex max-w-[44ch] flex-col items-end gap-3 text-right p-6 rounded-2xl border border-white/10 bg-[#0A0A0C]/75 backdrop-blur-xl shadow-2xl md:right-12 md:top-24">
           <span
-            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-3.5 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-3.5 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
             style={{
               boxShadow:
                 'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px -8px rgba(0,180,216,0.25)',
@@ -182,9 +182,9 @@ export const SpidermanCinematicChapter: React.FC = () => {
             THE WEB OF DESTINY
           </span>
 
-          <div className="relative self-stretch h-28 md:h-36">
+          <div className="relative self-stretch h-24 md:h-28">
             <h2
-              className="font-sans text-4xl font-extrabold leading-[0.98] tracking-tighter text-white md:text-6xl lg:text-7xl transition-opacity duration-200"
+              className="font-sans text-3xl font-extrabold leading-[0.98] tracking-tighter text-white md:text-5xl lg:text-6xl transition-opacity duration-200"
               style={{ opacity: snapTitle1Opacity }}
             >
               What's up,<br />
@@ -192,7 +192,7 @@ export const SpidermanCinematicChapter: React.FC = () => {
             </h2>
 
             <h2
-              className="absolute inset-0 font-sans text-4xl font-extrabold leading-[0.98] tracking-tighter text-white md:text-6xl lg:text-7xl transition-opacity duration-200"
+              className="absolute inset-0 font-sans text-3xl font-extrabold leading-[0.98] tracking-tighter text-white md:text-5xl lg:text-6xl transition-opacity duration-200"
               style={{ opacity: snapTitle2Opacity }}
             >
               It's a<br />
@@ -200,7 +200,7 @@ export const SpidermanCinematicChapter: React.FC = () => {
             </h2>
           </div>
 
-          <p className="max-w-[40ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-400">
+          <p className="max-w-[36ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-300">
             A freefall through the Manhattan skyline. Every leap, every swing is a test of precision, reflexes, and raw determination.
           </p>
         </div>

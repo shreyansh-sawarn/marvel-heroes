@@ -29,12 +29,12 @@ export const SpidermanHeroSequencer: React.FC = () => {
 
   const lastStageRef = useRef<SpiderStage>('perch');
 
-  // Preload 16:9 cinematic widescreen scene assets
+  // Preload single authentic high-resolution images (Zero stitching, zero seams)
   useEffect(() => {
     const assets = [
-      { key: 'perch', src: '/assets/scene_perch_16x9.jpg' },
-      { key: 'leap', src: '/assets/scene_leap_16x9.jpg' },
-      { key: 'swing', src: '/assets/scene_swing_16x9.jpg' },
+      { key: 'perch', src: '/assets/spidey_crouch_raw.jpg' },
+      { key: 'leap', src: '/assets/spidey_leap_raw.jpg' },
+      { key: 'swing', src: '/assets/spidey_swing_raw.jpg' },
     ];
 
     let loaded = 0;
@@ -57,7 +57,7 @@ export const SpidermanHeroSequencer: React.FC = () => {
     });
   }, []);
 
-  // 16:9 widescreen canvas rendering with 100% full-character framing
+  // Single unified photographic canvas rendering with responsive framing
   const drawScene = useCallback((p: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -82,7 +82,7 @@ export const SpidermanHeroSequencer: React.FC = () => {
     let blend = 0;
     let stage: SpiderStage = 'perch';
 
-    // Camera pan & subtle dynamic zoom
+    // Dynamic cinematic camera motion
     let camScale = 1.0;
     let camPanX = 0;
     let camPanY = 0;
@@ -93,86 +93,99 @@ export const SpidermanHeroSequencer: React.FC = () => {
       imgA = imagesRef.current.perch;
       imgB = imagesRef.current.leap;
       blend = subT > 0.72 ? (subT - 0.72) / 0.28 : 0;
-      camScale = 1.0 + subT * 0.03;
-      camPanX = subT * -10 * dpr;
-      camPanY = subT * 5 * dpr;
+      camScale = 1.0 + subT * 0.04;
+      camPanX = subT * -15 * dpr;
+      camPanY = subT * 8 * dpr;
     } else if (p < 0.68) {
       stage = 'dive';
       const subT = (p - 0.32) / 0.36;
       imgA = imagesRef.current.leap;
       imgB = imagesRef.current.swing;
       blend = subT > 0.72 ? (subT - 0.72) / 0.28 : 0;
-      camScale = 1.02 + subT * 0.04;
-      camPanX = -10 * dpr + subT * 20 * dpr;
-      camPanY = 5 * dpr - subT * 10 * dpr;
+      camScale = 1.02 + subT * 0.05;
+      camPanX = -15 * dpr + subT * 30 * dpr;
+      camPanY = 8 * dpr - subT * 16 * dpr;
     } else {
       stage = p < 0.88 ? 'swing' : 'apex';
       const subT = (p - 0.68) / 0.32;
       imgA = imagesRef.current.swing;
-      imgB = imagesRef.current.perch;
-      blend = subT > 0.85 ? (subT - 0.85) / 0.15 : 0;
+      imgB = imagesRef.current.swing;
+      blend = 0;
       camScale = 1.03 + Math.sin(subT * Math.PI) * 0.03;
-      camPanX = 10 * dpr - subT * 15 * dpr;
-      camPanY = -5 * dpr + subT * 8 * dpr;
+      camPanX = 15 * dpr - subT * 20 * dpr;
+      camPanY = -8 * dpr + subT * 12 * dpr;
     }
 
-    // Draw full 16:9 widescreen scene covering canvas
-    const drawWidescreenImage = (
+    // Helper to draw a single unified photo with responsive object-fit: cover
+    const drawUnifiedPhoto = (
       img: HTMLImageElement,
       opacity: number,
       scale: number,
       px: number,
-      py: number
+      py: number,
+      anchorY: number = 0.42
     ) => {
-      if (!img || !img.complete || opacity <= 0) return;
+      if (!img || !img.complete || opacity <= 0) return { drawW: 0, drawH: 0, offsetX: 0, offsetY: 0 };
       ctx.save();
       ctx.globalAlpha = opacity;
 
-      const imgAspect = img.naturalWidth / img.naturalHeight; // 1920 / 1080 = 1.777
+      const imgAspect = img.naturalWidth / img.naturalHeight;
       const canvasAspect = w / h;
-      let drawW = w * scale;
-      let drawH = h * scale;
-      let offsetX = (w - drawW) / 2 + px;
-      let offsetY = (h - drawH) / 2 + py;
+      let drawW: number;
+      let drawH: number;
 
       if (canvasAspect > imgAspect) {
         drawW = w * scale;
         drawH = (w / imgAspect) * scale;
-        offsetY = (h - drawH) / 2 + py;
       } else {
         drawH = h * scale;
         drawW = (h * imgAspect) * scale;
-        offsetX = (w - drawW) / 2 + px;
       }
+
+      const offsetX = (w - drawW) / 2 + px;
+      const offsetY = (h - drawH) * anchorY + py;
 
       ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
       ctx.restore();
+
+      return { drawW, drawH, offsetX, offsetY };
     };
 
     // 1. Draw Primary Scene A
+    let activeBounds = { drawW: w, drawH: h, offsetX: 0, offsetY: 0 };
     if (imgA) {
-      drawWidescreenImage(imgA, 1 - blend, camScale, camPanX, camPanY);
+      activeBounds = drawUnifiedPhoto(imgA, 1 - blend, camScale, camPanX, camPanY);
     }
 
     // 2. Draw Cross-faded Scene B
     if (imgB && blend > 0) {
-      drawWidescreenImage(imgB, blend, camScale * 0.99, camPanX * 0.9, camPanY * 0.9);
+      drawUnifiedPhoto(imgB, blend, camScale * 0.99, camPanX * 0.9, camPanY * 0.9);
     }
 
-    // 3. Subtle Left Gradient to ensure 100% typography readability
-    const leftShadow = ctx.createLinearGradient(0, 0, w * 0.55, 0);
-    leftShadow.addColorStop(0, 'rgba(10, 10, 12, 0.75)');
-    leftShadow.addColorStop(0.6, 'rgba(10, 10, 12, 0.25)');
-    leftShadow.addColorStop(1, 'rgba(10, 10, 12, 0)');
+    // 3. Cinematic Atmospheric Left Vignette (enhances text legibility over natural night sky)
+    const leftShadow = ctx.createLinearGradient(0, 0, w * 0.65, 0);
+    leftShadow.addColorStop(0, 'rgba(8, 8, 12, 0.85)');
+    leftShadow.addColorStop(0.45, 'rgba(8, 8, 12, 0.4)');
+    leftShadow.addColorStop(1, 'rgba(8, 8, 12, 0)');
     ctx.fillStyle = leftShadow;
-    ctx.fillRect(0, 0, w * 0.55, h);
+    ctx.fillRect(0, 0, w * 0.65, h);
 
-    // 4. Spider-Sense Precognitive Wave Arcs (Positioned right over Spider-Man's actual head on perch)
+    // Subtle edge grading
+    const edgeGrad = ctx.createRadialGradient(
+      w / 2, h / 2, Math.min(w, h) * 0.45,
+      w / 2, h / 2, Math.max(w, h) * 0.9
+    );
+    edgeGrad.addColorStop(0, 'rgba(5, 5, 8, 0)');
+    edgeGrad.addColorStop(1, 'rgba(5, 5, 8, 0.7)');
+    ctx.fillStyle = edgeGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // 4. Spider-Sense Precognitive Wave Arcs (Positioned right over Spider-Man's actual head)
     if (stage === 'perch' && p < 0.24) {
       ctx.save();
       const sensePulse = (Date.now() / 450) % 1;
-      const headX = w * 0.74 + camPanX;
-      const headY = h * 0.26 + camPanY;
+      const headX = activeBounds.offsetX + activeBounds.drawW * 0.54;
+      const headY = activeBounds.offsetY + activeBounds.drawH * 0.27;
 
       ctx.beginPath();
       ctx.arc(headX, headY, (24 + sensePulse * 20) * dpr, Math.PI * 1.1, Math.PI * 1.9);
@@ -195,10 +208,10 @@ export const SpidermanHeroSequencer: React.FC = () => {
     // 5. Dynamic High-Tension Silk Web Line during Dive & Swing
     if (stage === 'dive') {
       ctx.save();
-      const anchorX = w * 0.92;
-      const anchorY = h * 0.08;
-      const wristX = w * 0.65 + camPanX;
-      const wristY = h * 0.26 + camPanY;
+      const anchorX = w * 0.94;
+      const anchorY = h * 0.06;
+      const wristX = activeBounds.offsetX + activeBounds.drawW * 0.84;
+      const wristY = activeBounds.offsetY + activeBounds.drawH * 0.25;
 
       // Anchor Flare
       ctx.beginPath();
@@ -228,10 +241,10 @@ export const SpidermanHeroSequencer: React.FC = () => {
       ctx.restore();
     } else if (stage === 'swing') {
       ctx.save();
-      const anchorX = w * 0.88;
-      const anchorY = h * 0.02;
-      const handX = w * 0.73 + camPanX;
-      const handY = h * 0.10 + camPanY;
+      const anchorX = w * 0.86;
+      const anchorY = h * 0.01;
+      const handX = activeBounds.offsetX + activeBounds.drawW * 0.54;
+      const handY = activeBounds.offsetY + activeBounds.drawH * 0.09;
 
       // Anchor Flare
       ctx.beginPath();

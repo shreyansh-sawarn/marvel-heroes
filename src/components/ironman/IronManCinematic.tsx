@@ -33,6 +33,9 @@ export const IronManCinematic: React.FC = () => {
       img.onerror = () => {
         count++;
         setLoadedCount(count);
+        if (count >= TOTAL_FRAMES) {
+          setIsReady(true);
+        }
       };
       images.push(img);
     }
