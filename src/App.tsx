@@ -7,6 +7,9 @@ import { SpidermanSystems } from './components/spiderman/SpidermanSystems';
 import { IronManHero } from './components/ironman/IronManHero';
 import { IronManCinematic } from './components/ironman/IronManCinematic';
 import { IronManSystems } from './components/ironman/IronManSystems';
+import { CaptainAmericaHero } from './components/captainamerica/CaptainAmericaHero';
+import { CaptainAmericaCinematic } from './components/captainamerica/CaptainAmericaCinematic';
+import { CaptainAmericaSystems } from './components/captainamerica/CaptainAmericaSystems';
 import { HeroSelector } from './components/ui/HeroSelector';
 import { BackgroundParticles } from './components/ui/BackgroundParticles';
 import { HeroTransitionCurtain } from './components/ui/HeroTransitionCurtain';
@@ -24,10 +27,10 @@ import {
 import { soundEngine } from './services/soundEngine';
 
 export const App: React.FC = () => {
-  const [activeHero, setActiveHero] = useState<'spiderman' | 'ironman'>('spiderman');
+  const [activeHero, setActiveHero] = useState<'spiderman' | 'ironman' | 'captainamerica'>('spiderman');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isHeroSelectorOpen, setIsHeroSelectorOpen] = useState(false);
-  const [transitionTarget, setTransitionTarget] = useState<'ironman' | 'spiderman' | null>(null);
+  const [transitionTarget, setTransitionTarget] = useState<'ironman' | 'spiderman' | 'captainamerica' | null>(null);
 
   // Sync data-hero on document.documentElement for global CSS variables
   useEffect(() => {
@@ -70,7 +73,8 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleHeroSelect = (heroId: 'ironman' | 'spiderman') => {
+  const handleHeroSelect = (heroId: 'ironman' | 'spiderman' | 'captainamerica') => {
+    setIsHeroSelectorOpen(false);
     if (heroId === activeHero) return;
     setTransitionTarget(heroId);
     soundEngine.playHeroSwitchDetailed(heroId);
@@ -86,6 +90,7 @@ export const App: React.FC = () => {
   };
 
   const isIronMan = activeHero === 'ironman';
+  const isCap = activeHero === 'captainamerica';
 
   return (
     <div
@@ -116,6 +121,17 @@ export const App: React.FC = () => {
 
             {/* Iron Man Chapter 3: Stark Industries JARVIS Diagnostic Specs */}
             <IronManSystems />
+          </>
+        ) : isCap ? (
+          <>
+            {/* Captain America Chapter 1: The First Avenger - Vibranium Shield Throw */}
+            <CaptainAmericaHero />
+
+            {/* Captain America Chapter 2: Battlefield Command & Kinetic Ricochet */}
+            <CaptainAmericaCinematic />
+
+            {/* Captain America Chapter 3: Project Rebirth & Shield Dynamics */}
+            <CaptainAmericaSystems />
           </>
         ) : (
           <>
@@ -300,34 +316,57 @@ export const App: React.FC = () => {
             </div>
 
             {/* Captain America Card */}
-            <div className="bg-[#090C16] border border-white/10 rounded-2xl p-6 opacity-70 relative flex flex-col justify-between">
+            <div
+              onClick={() => handleHeroSelect('captainamerica')}
+              className={`rounded-2xl p-6 transition-all border group cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                activeHero === 'captainamerica'
+                  ? 'bg-[#0B1528] border-blue-500/80 shadow-[0_0_35px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/50'
+                  : 'bg-[#0B0F1E] border-white/10 hover:border-blue-500/50 hover:bg-[#101526]'
+              }`}
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/40 flex items-center justify-center text-blue-400">
                     <Shield className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-mono font-bold text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> PHASE 4
-                  </span>
+                  {activeHero === 'captainamerica' ? (
+                    <span className="text-[11px] font-mono font-bold text-blue-300 bg-blue-950/90 border border-blue-500/50 px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-blue-400" /> ACTIVE EXPERIENCE
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-1 rounded-full flex items-center gap-1 group-hover:bg-emerald-900 transition">
+                      <Play className="w-2.5 h-2.5 fill-emerald-400" /> LAUNCH CAPTAIN AMERICA
+                    </span>
+                  )}
                 </div>
 
                 <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 block mb-1">
                   VIBRANIUM DYNAMICS
                 </span>
-                <h3 className="font-sans font-extrabold text-2xl text-white tracking-tight">
+                <h3 className="font-sans font-extrabold text-2xl text-white tracking-tight group-hover:text-blue-400 transition">
                   CAPTAIN AMERICA
                 </h3>
                 <p className="text-xs font-semibold text-zinc-400 mb-2">
                   Steve Rogers • The First Avenger
                 </p>
 
-                <div className="mt-3 p-3 bg-black/40 rounded-xl border border-white/5 text-xs text-zinc-400">
-                  Ricochet Vibranium shield toss across urban architecture with kinetic mid-air catch.
+                <div className="mt-3 p-3 bg-black/60 rounded-xl border border-white/5 space-y-1.5 text-xs font-mono">
+                  <div className="flex justify-between text-zinc-400">
+                    <span>Vibranium Absorption:</span>
+                    <span className="text-blue-400 font-bold">100% Kinetic</span>
+                  </div>
+                  <div className="flex justify-between text-zinc-400">
+                    <span>Shield Throw Dynamics:</span>
+                    <span className="text-red-400 font-bold">65 MPH / Sub-Sonic</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-mono text-zinc-500">
-                In Development · Q4 Release
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-mono text-zinc-400">
+                <span>Phase 3 · Kinetic 3D Canvas</span>
+                <span className="text-blue-400 group-hover:underline">
+                  {activeHero === 'captainamerica' ? 'Viewing Now ↑' : 'Switch Hero →'}
+                </span>
               </div>
             </div>
 
@@ -339,7 +378,7 @@ export const App: React.FC = () => {
                     <Zap className="w-5 h-5" />
                   </div>
                   <span className="text-[10px] font-mono font-bold text-zinc-400 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> PHASE 5
+                    <Lock className="w-3 h-3" /> PHASE 4
                   </span>
                 </div>
 
@@ -398,10 +437,14 @@ export const App: React.FC = () => {
                 <span
                   aria-hidden="true"
                   className={`inline-block h-2.5 w-2.5 rounded-full animate-pulse shadow-md ${
-                    isIronMan ? 'bg-amber-400' : 'bg-marvel-red'
+                    isIronMan ? 'bg-amber-400' : isCap ? 'bg-blue-400' : 'bg-marvel-red'
                   }`}
                 />
-                {isIronMan ? 'Stark Industries · Avengers Initiative' : 'Parker Technologies · Marvel Heroes'}
+                {isIronMan
+                  ? 'Stark Industries · Avengers Initiative'
+                  : isCap
+                  ? 'SSR Tactical Command · Avengers Coalition'
+                  : 'Parker Technologies · Marvel Heroes'}
               </div>
               <p className="max-w-[42ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-400">
                 Interactive superhero scrollytelling engine powered by React 19, Lenis smooth scrolling, GSAP physics, and Web Audio procedural synthesis.
@@ -420,7 +463,7 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2 border-t border-white/5 pt-6 font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500 md:flex-row md:items-center md:justify-between">
-            <span>Marvel Heroes 3D Scrollytelling Engine · Phase 1 &amp; Phase 2 Active</span>
+            <span>Marvel Heroes 3D Scrollytelling Engine · Phase 1, Phase 2 &amp; Phase 3 Active</span>
             <span>Proof of concept — Marvel fan tribute</span>
           </div>
         </div>

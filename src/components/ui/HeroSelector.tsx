@@ -6,7 +6,7 @@ import { soundEngine } from '../../services/soundEngine';
 interface HeroSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectHero: (heroId: 'ironman' | 'spiderman') => void;
+  onSelectHero: (heroId: 'ironman' | 'spiderman' | 'captainamerica') => void;
   currentHeroId: string;
 }
 
@@ -36,6 +36,18 @@ export const HEROES_ROSTER: HeroMeta[] = [
     isAvailable: true,
   },
   {
+    id: 'captainamerica',
+    name: 'Captain America',
+    alias: 'Steve Rogers',
+    tagline: 'The First Avenger',
+    primaryColor: '#3B82F6',
+    secondaryColor: '#DC2626',
+    accentColor: '#FFFFFF',
+    action: '3D Vibranium Shield Throw Towards Viewer & S.S.R. Command',
+    iconName: 'shield',
+    isAvailable: true,
+  },
+  {
     id: 'blackwidow',
     name: 'Black Widow',
     alias: 'Natasha Romanoff',
@@ -45,19 +57,6 @@ export const HEROES_ROSTER: HeroMeta[] = [
     accentColor: '#F59E0B',
     action: 'Tactical Combat Roll & Iconic 3-Point Hero Landing',
     iconName: 'eye',
-    isAvailable: false,
-    comingSoon: true,
-  },
-  {
-    id: 'captainamerica',
-    name: 'Captain America',
-    alias: 'Steve Rogers',
-    tagline: 'The First Avenger',
-    primaryColor: '#3B82F6',
-    secondaryColor: '#DC2626',
-    accentColor: '#FFFFFF',
-    action: 'Ricochet Vibranium Shield Toss & Kinetic Mid-Air Catch',
-    iconName: 'shield',
     isAvailable: false,
     comingSoon: true,
   },
@@ -97,7 +96,7 @@ export const HeroSelector: React.FC<HeroSelectorProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const handleHeroClick = (heroId: 'ironman' | 'spiderman') => {
+  const handleHeroClick = (heroId: 'ironman' | 'spiderman' | 'captainamerica') => {
     onSelectHero(heroId);
     onClose();
   };
@@ -159,7 +158,7 @@ export const HeroSelector: React.FC<HeroSelectorProps> = ({
                 key={hero.id}
                 onClick={() => {
                   if (hero.isAvailable) {
-                    handleHeroClick(hero.id as 'ironman' | 'spiderman');
+                    handleHeroClick(hero.id as 'ironman' | 'spiderman' | 'captainamerica');
                   }
                 }}
                 className={`relative rounded-2xl p-5 border transition-all flex flex-col justify-between group ${
@@ -170,6 +169,8 @@ export const HeroSelector: React.FC<HeroSelectorProps> = ({
                   isSelected
                     ? hero.id === 'ironman'
                       ? 'border-amber-400 ring-2 ring-amber-400/40 bg-[#1A1828] shadow-[0_0_25px_rgba(212,162,47,0.3)]'
+                      : hero.id === 'captainamerica'
+                      ? 'border-blue-500 ring-2 ring-blue-500/40 bg-[#0D1B33] shadow-[0_0_25px_rgba(59,130,246,0.35)]'
                       : 'border-red-500 ring-2 ring-red-500/40 bg-[#1B1424] shadow-[0_0_25px_rgba(226,54,54,0.3)]'
                     : hero.isAvailable
                     ? 'border-white/10 hover:border-white/30'

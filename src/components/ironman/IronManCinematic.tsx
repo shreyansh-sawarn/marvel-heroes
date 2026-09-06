@@ -6,6 +6,11 @@ export const IronManCinematic: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollProgressRef = useRef(0);
+
+  const isVisibleRef = useRef(false);
+  const isDirtyRef = useRef(true);
+  const animIdRef = useRef<number | null>(null);
 
   // 4K Mach-3 Cloud Flight Asset
   const flightImgRef = useRef<HTMLImageElement | null>(null);
@@ -14,20 +19,12 @@ export const IronManCinematic: React.FC = () => {
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      mouseRef.current.targetX = (e.clientX / window.innerWidth) * 2 - 1;
-      mouseRef.current.targetY = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onMouseMove);
-  }, []);
-
-  useEffect(() => {
     const img = new Image();
     img.src = '/assets/ironman_banking_raw.jpg';
     img.onload = () => {
       flightImgRef.current = img;
       setIsReady(true);
+      isDirtyRef.current = true;
     };
   }, []);
 
@@ -121,16 +118,83 @@ export const IronManCinematic: React.FC = () => {
     ctx.restore();
   }, []);
 
-  useEffect(() => {
-    let animId: number;
-    const renderLoop = () => {
-      drawCinematic(scrollProgress);
-      animId = requestAnimationFrame(renderLoop);
-    };
-    animId = requestAnimationFrame(renderLoop);
-    return () => cancelAnimationFrame(animId);
-  }, [drawCinematic, scrollProgress]);
+  // Performance Boost: On-demand render scheduler with off-screen culling
+  const scheduleRender = useCallback(() => {
+    if (!isVisibleRef.current || document.hidden) return;
+    if (animIdRef.current !== null) return;
 
+    animIdRef.current = requestAnimationFrame(() => {
+      animIdRef.current = null;
+
+      const dx = mouseRef.current.targetX - mouseRef.current.x;
+      const dy = mouseRef.current.targetY - mouseRef.current.y;
+      const isMouseMoving = Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001;
+
+      if (isMouseMoving) {
+        mouseRef.current.x += dx * 0.08;
+        mouseRef.current.y += dy * 0.08;
+        isDirtyRef.current = true;
+      }
+
+      if (isDirtyRef.current) {
+        drawCinematic(scrollProgressRef.current);
+        isDirtyRef.current = false;
+
+        if (isMouseMoving) {
+          scheduleRender();
+        }
+      }
+    });
+  }, [drawCinematic]);
+
+  // Viewport Culling via IntersectionObserver
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisibleRef.current = entry.isIntersecting;
+          if (entry.isIntersecting) {
+            isDirtyRef.current = true;
+            scheduleRender();
+          }
+        });
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scheduleRender]);
+
+  // Tab Visibility Culling
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (!document.hidden && isVisibleRef.current) {
+        isDirtyRef.current = true;
+        scheduleRender();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [scheduleRender]);
+
+  // Mouse move listener with dirty flag
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.targetY = (e.clientY / window.innerHeight) * 2 - 1;
+      isDirtyRef.current = true;
+      scheduleRender();
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMouseMove);
+  }, [scheduleRender]);
+
+  // Scroll scrubbing listener with dirty flag
   useEffect(() => {
     const handleScroll = () => {
       const el = containerRef.current;
@@ -141,16 +205,23 @@ export const IronManCinematic: React.FC = () => {
       if (totalScroll <= 0) return;
 
       const progress = Math.min(1, Math.max(0, -rect.top / totalScroll));
+      scrollProgressRef.current = progress;
       setScrollProgress(progress);
+      isDirtyRef.current = true;
+      scheduleRender();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [scheduleRender]);
 
+  // Render when ready
   useEffect(() => {
-    if (isReady) drawCinematic(0);
-  }, [isReady, drawCinematic]);
+    if (isReady) {
+      isDirtyRef.current = true;
+      scheduleRender();
+    }
+  }, [isReady, scheduleRender]);
 
   const quote1Active = scrollProgress < 0.4;
   const quote2Active = scrollProgress >= 0.4 && scrollProgress < 0.75;

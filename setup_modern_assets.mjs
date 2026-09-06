@@ -73,6 +73,38 @@ async function setupAssets() {
     console.error('Missing im_flying_2.jpg!');
   }
 
+  // 5. Captain America 4K Battlefield Background
+  const capBgDest = path.join(assetsDir, 'cap_battlefield_raw.jpg');
+  const capSvg = `
+  <svg width="3840" height="2160" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="bg" cx="50%" cy="40%" r="65%">
+        <stop offset="0%" stop-color="#182338" />
+        <stop offset="35%" stop-color="#0F1626" />
+        <stop offset="70%" stop-color="#080B12" />
+        <stop offset="100%" stop-color="#040508" />
+      </radialGradient>
+      <radialGradient id="glow" cx="45%" cy="45%" r="45%">
+        <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.16" />
+        <stop offset="60%" stop-color="#1D4ED8" stop-opacity="0.04" />
+        <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="dust" cx="60%" cy="65%" r="50%">
+        <stop offset="0%" stop-color="#DC2626" stop-opacity="0.08" />
+        <stop offset="70%" stop-color="#000000" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#bg)" />
+    <rect width="100%" height="100%" fill="url(#glow)" />
+    <rect width="100%" height="100%" fill="url(#dust)" />
+  </svg>
+  `;
+  console.log('Generating cap_battlefield_raw.jpg...');
+  await sharp(Buffer.from(capSvg))
+    .jpeg({ quality: 92 })
+    .toFile(capBgDest);
+  console.log('✓ cap_battlefield_raw.jpg ready');
+
   console.log('--- All Modern 4K/5K Assets Processed Successfully ---');
 }
 

@@ -6,6 +6,11 @@ export const IronManHero: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [scrollRatio, setScrollRatio] = useState(0);
+  const scrollRatioRef = useRef(0);
+
+  const isVisibleRef = useRef(false);
+  const isDirtyRef = useRef(true);
+  const animIdRef = useRef<number | null>(null);
 
   const imagesRef = useRef<{
     mk85?: HTMLImageElement;
@@ -14,15 +19,6 @@ export const IronManHero: React.FC = () => {
 
   // 3D Gyroscopic Mouse Parallax
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      mouseRef.current.targetX = (e.clientX / window.innerWidth) * 2 - 1;
-      mouseRef.current.targetY = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onMouseMove);
-  }, []);
 
   // Preload 4K authentic Marvel Studios Mark LXXXV assets
   useEffect(() => {
@@ -150,18 +146,83 @@ export const IronManHero: React.FC = () => {
     ctx.fillRect(0, 0, w, h);
   }, []);
 
-  // Continuous animation loop for gyro
-  useEffect(() => {
-    let animId: number;
-    const renderLoop = () => {
-      renderFrame(scrollRatio);
-      animId = requestAnimationFrame(renderLoop);
-    };
-    animId = requestAnimationFrame(renderLoop);
-    return () => cancelAnimationFrame(animId);
-  }, [renderFrame, scrollRatio]);
+  // Performance Boost: On-demand render scheduler with off-screen culling
+  const scheduleRender = useCallback(() => {
+    if (!isVisibleRef.current || document.hidden) return;
+    if (animIdRef.current !== null) return;
 
-  // Handle scroll scrubbing
+    animIdRef.current = requestAnimationFrame(() => {
+      animIdRef.current = null;
+
+      const dx = mouseRef.current.targetX - mouseRef.current.x;
+      const dy = mouseRef.current.targetY - mouseRef.current.y;
+      const isMouseMoving = Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001;
+
+      if (isMouseMoving) {
+        mouseRef.current.x += dx * 0.08;
+        mouseRef.current.y += dy * 0.08;
+        isDirtyRef.current = true;
+      }
+
+      if (isDirtyRef.current) {
+        renderFrame(scrollRatioRef.current);
+        isDirtyRef.current = false;
+
+        if (isMouseMoving) {
+          scheduleRender();
+        }
+      }
+    });
+  }, [renderFrame]);
+
+  // Viewport Culling via IntersectionObserver
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisibleRef.current = entry.isIntersecting;
+          if (entry.isIntersecting) {
+            isDirtyRef.current = true;
+            scheduleRender();
+          }
+        });
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scheduleRender]);
+
+  // Tab Visibility Culling
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (!document.hidden && isVisibleRef.current) {
+        isDirtyRef.current = true;
+        scheduleRender();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [scheduleRender]);
+
+  // Mouse move listener with dirty flag
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.targetY = (e.clientY / window.innerHeight) * 2 - 1;
+      isDirtyRef.current = true;
+      scheduleRender();
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMouseMove);
+  }, [scheduleRender]);
+
+  // Scroll scrubbing listener with dirty flag
   useEffect(() => {
     const handleScroll = () => {
       const el = containerRef.current;
@@ -172,12 +233,23 @@ export const IronManHero: React.FC = () => {
       if (totalScroll <= 0) return;
 
       const progress = Math.min(1, Math.max(0, -rect.top / totalScroll));
+      scrollRatioRef.current = progress;
       setScrollRatio(progress);
+      isDirtyRef.current = true;
+      scheduleRender();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [scheduleRender]);
+
+  // Render when ready
+  useEffect(() => {
+    if (isReady) {
+      isDirtyRef.current = true;
+      scheduleRender();
+    }
+  }, [isReady, scheduleRender]);
 
   const introOpacity = Math.max(0, Math.min(1, (0.2 - scrollRatio) / 0.12));
   const quote1Active = scrollRatio > 0.15 && scrollRatio < 0.45;

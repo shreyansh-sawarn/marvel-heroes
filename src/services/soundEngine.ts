@@ -343,7 +343,7 @@ class SoundEngine {
   }
 
   // Enhanced Hero Switch Audio
-  public playHeroSwitchDetailed(hero: 'ironman' | 'spiderman') {
+  public playHeroSwitchDetailed(hero: 'ironman' | 'spiderman' | 'captainamerica') {
     if (this.isMuted) return;
     this.initContext();
     if (!this.ctx) return;
@@ -352,12 +352,123 @@ class SoundEngine {
       // Iron Man: Heavy mechanical clamp + repulsor flare
       this.playImpact();
       setTimeout(() => this.playRepulsor(), 140);
+    } else if (hero === 'captainamerica') {
+      // Captain America: Kinetic shield whoosh + resonant vibranium clang
+      this.playShieldThrow();
+      setTimeout(() => this.playShieldClang(), 180);
     } else {
       // Spider-Man: Rapid double web thwip + spider-sense chime
       this.playWebShoot();
       setTimeout(() => this.playWebShoot(), 160);
       setTimeout(() => this.playSpiderSense(), 260);
     }
+  }
+
+  // Captain America: Whistling kinetic shield throw whoosh
+  public playShieldThrow() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+
+    // Air displacement white noise / flutter
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.45);
+    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const whiteNoise = this.ctx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(450, t);
+    filter.frequency.exponentialRampToValueAtTime(1600, t + 0.18);
+    filter.frequency.exponentialRampToValueAtTime(320, t + 0.42);
+    filter.Q.setValueAtTime(3.5, t);
+
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.01, t);
+    noiseGain.gain.linearRampToValueAtTime(0.35, t + 0.12);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.44);
+
+    whiteNoise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(this.ctx.destination);
+
+    whiteNoise.start(t);
+    whiteNoise.stop(t + 0.45);
+
+    // Whistling spinning harmonic pitch
+    const osc = this.ctx.createOscillator();
+    const oscGain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, t);
+    osc.frequency.exponentialRampToValueAtTime(1100, t + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(480, t + 0.4);
+
+    oscGain.gain.setValueAtTime(0.01, t);
+    oscGain.gain.linearRampToValueAtTime(0.18, t + 0.12);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+
+    osc.connect(oscGain);
+    oscGain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.43);
+  }
+
+  // Captain America: Resonant Vibranium Alloy Metallic Clang
+  public playShieldClang() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+
+    // Primary metallic impact strike
+    const frequencies = [820, 1640, 2460, 4200];
+    frequencies.forEach((freq, idx) => {
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, t);
+      // Subtle pitch bend downward on impact
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.96, t + 0.04);
+
+      const decayTime = 0.5 + idx * 0.2;
+      const volume = 0.3 / (idx + 1);
+
+      gain.gain.setValueAtTime(volume, t);
+      gain.gain.exponentialRampToValueAtTime(0.0005, t + decayTime);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(t);
+      osc.stop(t + decayTime + 0.05);
+    });
+
+    // Sub-bass kinetic thud
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(160, t);
+    subOsc.frequency.exponentialRampToValueAtTime(40, t + 0.18);
+
+    subGain.gain.setValueAtTime(0.4, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+
+    subOsc.start(t);
+    subOsc.stop(t + 0.23);
   }
 
   // Web-Shooter Ballistic Firing Modes
