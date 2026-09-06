@@ -8,13 +8,26 @@ export const SpidermanCinematicChapter: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
-  const leapImgRef = useRef<HTMLImageElement | null>(null);
+  // 5K Non-Repeated Patrol Asset
+  const patrolImgRef = useRef<HTMLImageElement | null>(null);
+
+  // 3D Gyroscopic Mouse Parallax
+  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
   useEffect(() => {
-    const leap = new Image();
-    leap.src = '/assets/spidey_leap_raw.jpg';
-    leap.onload = () => {
-      leapImgRef.current = leap;
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.targetY = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMouseMove);
+  }, []);
+
+  useEffect(() => {
+    const patrol = new Image();
+    patrol.src = '/assets/spidey_patrol_raw.jpg';
+    patrol.onload = () => {
+      patrolImgRef.current = patrol;
       setIsReady(true);
     };
   }, []);
@@ -37,19 +50,26 @@ export const SpidermanCinematicChapter: React.FC = () => {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Single unified photo dive zoom
-    const leap = leapImgRef.current;
-    if (leap && leap.complete) {
-      const zoom = 1.0 + p * 0.08;
-      const panY = p * -30 * dpr;
-      const rot = Math.sin(p * Math.PI) * 0.02;
+    // Lerp mouse parallax for 3D depth
+    mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.08;
+    mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.08;
+    const gyroPanX = mouseRef.current.x * 28 * dpr;
+    const gyroPanY = mouseRef.current.y * 18 * dpr;
+    const gyroRot = mouseRef.current.x * 0.01;
+
+    // Single unified 5K photo girder patrol zoom & parallax
+    const patrol = patrolImgRef.current;
+    if (patrol && patrol.complete) {
+      const zoom = 1.0 + p * 0.06;
+      const panY = gyroPanY + p * -25 * dpr;
+      const panX = gyroPanX;
 
       ctx.save();
-      ctx.translate(w / 2, h / 2 + panY);
-      ctx.rotate(rot);
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(gyroRot);
       ctx.scale(zoom, zoom);
 
-      const imgAspect = leap.naturalWidth / leap.naturalHeight;
+      const imgAspect = patrol.naturalWidth / patrol.naturalHeight;
       const canvasAspect = w / h;
       let drawW = w;
       let drawH = h;
@@ -61,25 +81,43 @@ export const SpidermanCinematicChapter: React.FC = () => {
         drawW = h * imgAspect;
       }
 
-      ctx.drawImage(leap, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.drawImage(patrol, -drawW / 2 + panX, -drawH / 2 + panY, drawW, drawH);
       ctx.restore();
     }
 
-    // Atmospheric grading vignette
+    // Atmospheric city glow & tactical scanner grading
     const grad = ctx.createRadialGradient(
       w / 2,
       h / 2,
       Math.min(w, h) * 0.35,
       w / 2,
       h / 2,
-      Math.max(w, h) * 0.85
+      Math.max(w, h) * 0.9
     );
-    grad.addColorStop(0, 'rgba(10, 10, 14, 0)');
-    grad.addColorStop(0.7, 'rgba(8, 8, 12, 0.45)');
-    grad.addColorStop(1, 'rgba(5, 5, 8, 0.92)');
+    grad.addColorStop(0, 'rgba(8, 10, 16, 0)');
+    grad.addColorStop(0.7, 'rgba(6, 8, 14, 0.4)');
+    grad.addColorStop(1, 'rgba(4, 5, 8, 0.9)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
+
+    // Subtle tactical scanline overlay
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 180, 216, 0.03)';
+    for (let y = 0; y < h; y += 8 * dpr) {
+      ctx.fillRect(0, y, w, 1 * dpr);
+    }
+    ctx.restore();
   }, []);
+
+  useEffect(() => {
+    let animId: number;
+    const renderLoop = () => {
+      drawCinematic(scrollProgress);
+      animId = requestAnimationFrame(renderLoop);
+    };
+    animId = requestAnimationFrame(renderLoop);
+    return () => cancelAnimationFrame(animId);
+  }, [drawCinematic, scrollProgress]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,44 +130,25 @@ export const SpidermanCinematicChapter: React.FC = () => {
 
       const progress = Math.min(1, Math.max(0, -rect.top / totalScroll));
       setScrollProgress(progress);
-      drawCinematic(progress);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', () => drawCinematic(scrollProgress), {
-      passive: true,
-    });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', () => drawCinematic(scrollProgress));
-    };
-  }, [drawCinematic, scrollProgress]);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (isReady) drawCinematic(0);
   }, [isReady, drawCinematic]);
 
-  const snapTitle1Opacity = Math.max(
-    0,
-    Math.min(1, (0.52 - scrollProgress) / 0.12)
-  );
-  const snapTitle2Opacity = Math.max(
-    0,
-    Math.min(1, (scrollProgress - 0.48) / 0.12)
-  );
-
-  const quote1Opacity = scrollProgress > 0.12 && scrollProgress < 0.38 ? 1 : 0;
-  const quote2Opacity =
-    scrollProgress >= 0.42 && scrollProgress < 0.65 ? 1 : 0;
-  const quote3Opacity =
-    scrollProgress >= 0.68 && scrollProgress < 0.92 ? 1 : 0;
+  const quote1Active = scrollProgress < 0.35;
+  const quote2Active = scrollProgress >= 0.35 && scrollProgress < 0.7;
+  const quote3Active = scrollProgress >= 0.7;
 
   return (
     <section
       id="cinematic-chapter"
       ref={containerRef}
-      className="relative w-full h-[400vh] bg-[#0A0A0C] border-t border-white/5"
+      className="relative w-full h-[350vh] bg-[#0A0A0C] border-t border-white/5"
     >
       {/* STICKY FULLSCREEN VIEWPORT */}
       <div className="sticky top-0 w-full h-screen overflow-hidden bg-[#0A0A0C]">
@@ -161,121 +180,53 @@ export const SpidermanCinematicChapter: React.FC = () => {
         </div>
         <div className="pointer-events-none absolute right-6 top-16 z-10 flex items-center gap-3 md:right-10 md:top-20">
           <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#00B4D8]">
-            CHAPTER 02 // VERTIGO DIVE
+            CHAPTER 02 // GIRDER PATROL
           </span>
           <span
             aria-hidden="true"
-            className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] shadow-[0_0_10px_rgba(0,180,216,0.85)]"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] shadow-[0_0_10px_rgba(0,180,216,0.85)] animate-pulse"
           />
         </div>
 
-        {/* Top Right Title — Dual Morph */}
-        <div className="pointer-events-none absolute right-4 top-16 left-4 md:left-auto md:right-12 md:top-24 z-10 flex max-w-[44ch] flex-col items-end gap-2 md:gap-3 text-right p-4 md:p-6 rounded-2xl border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-xl shadow-2xl">
-          <span
-            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 md:px-3.5 md:py-1.5 font-mono text-[9px] md:text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
-            style={{
-              boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px -8px rgba(0,180,216,0.25)',
-            }}
-          >
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] shadow-[0_0_10px_rgba(0,180,216,0.85)]" />
-            NYC PATROL // POLICE SCANNER LIVE
-          </span>
-
-          <div className="relative self-stretch h-20 md:h-28">
-            <h2
-              className="font-sans text-2xl md:text-5xl lg:text-6xl font-extrabold leading-[0.98] tracking-tighter text-white transition-opacity duration-200"
-              style={{ opacity: snapTitle1Opacity }}
-            >
-              A fresh start.<br />
-              <span className="text-[#00B4D8]">Brand New Day.</span>
-            </h2>
-
-            <h2
-              className="absolute inset-0 font-sans text-2xl md:text-5xl lg:text-6xl font-extrabold leading-[0.98] tracking-tighter text-white transition-opacity duration-200"
-              style={{ opacity: snapTitle2Opacity }}
-            >
-              Friendly Neighborhood<br />
-              <span className="text-[#E62429]">Spider-Man.</span>
-            </h2>
+        {/* Sleek Minimalist Top-Right Recon Badge (Decluttered, 85%+ Visual Freedom) */}
+        <div className="pointer-events-none absolute right-6 top-24 z-10 hidden sm:flex flex-col items-end gap-1.5 p-4 rounded-xl border border-white/10 bg-[#0A0A0C]/70 backdrop-blur-md shadow-xl">
+          <div className="flex items-center gap-2 font-mono text-[10px] text-[#00B4D8] uppercase tracking-widest">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00B4D8] animate-ping" />
+            ELEVATION 840 FT // EMPIRE STATE SECTOR
           </div>
-
-          <p className="max-w-[36ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-300 hidden sm:block">
-            Peter Parker diving through the Manhattan skyline. High-viscosity tensile webbing, classic pendulum swing dynamics, and raw street-level instincts.
+          <p className="font-mono text-[11px] text-zinc-400">
+            Scanner Feed: Hell's Kitchen & Mid-Town Patrol
           </p>
         </div>
 
-        {/* Left Side Quote Cards */}
-        {/* Quote 1 */}
-        <div
-          className="pointer-events-none absolute bottom-20 left-4 md:bottom-auto md:top-[24%] md:left-14 z-20 w-[380px] max-w-[calc(100vw-2rem)] transition-all duration-300"
-          style={{
-            opacity: quote1Opacity,
-            transform: `translateY(${(1 - quote1Opacity) * 20}px)`,
-          }}
-        >
-          <div className="p-5 md:p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#00B4D8] block mb-2">
-              01 — IDENTITY
-            </span>
-            <blockquote className="font-sans text-lg md:text-xl font-medium leading-snug tracking-tight text-white">
-              “They don't know who's under the mask anymore. And that's exactly why I have to keep fighting.”
-            </blockquote>
-            <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8]">
-                SPIDER-MAN: BRAND NEW DAY
-              </span>
-            </figcaption>
-          </div>
-        </div>
+        {/* SINGLE SLEEK DYNAMIC RADIO INTERCEPT CAPSULE (Bottom-Left) */}
+        <div className="pointer-events-none absolute bottom-16 left-6 md:left-12 z-20 max-w-lg transition-all duration-300">
+          {quote1Active && (
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-md shadow-xl">
+              <span className="h-2 w-2 rounded-full bg-[#00B4D8] shadow-[0_0_8px_#00B4D8] animate-pulse" />
+              <p className="font-mono text-xs text-zinc-200 tracking-wide">
+                <span className="text-[#00B4D8] font-bold">SCANNER:</span> “All units, 10-33 in progress near Midtown.”
+              </p>
+            </div>
+          )}
 
-        {/* Quote 2 */}
-        <div
-          className="pointer-events-none absolute bottom-20 left-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-14 z-20 w-[380px] max-w-[calc(100vw-2rem)] transition-all duration-300"
-          style={{
-            opacity: quote2Opacity,
-            transform: `translateY(${(1 - quote2Opacity) * 20}px)`,
-          }}
-        >
-          <div className="p-5 md:p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#E62429] block mb-2">
-              02 — STREET PATROL
-            </span>
-            <blockquote className="font-sans text-lg md:text-xl font-medium leading-snug tracking-tight text-white">
-              “Someone has to look out for the little guy. Especially when no one else is looking.”
-            </blockquote>
-            <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429]">
-                SPIDER-MAN: BRAND NEW DAY
-              </span>
-            </figcaption>
-          </div>
-        </div>
+          {quote2Active && (
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-md shadow-xl">
+              <span className="h-2 w-2 rounded-full bg-[#E62429] shadow-[0_0_8px_#E62429] animate-pulse" />
+              <p className="font-mono text-xs text-zinc-200 tracking-wide">
+                <span className="text-[#E62429] font-bold">PETER:</span> “Someone has to look out for the little guy.”
+              </p>
+            </div>
+          )}
 
-        {/* Quote 3 */}
-        <div
-          className="pointer-events-none absolute bottom-20 left-4 md:bottom-28 md:left-14 z-20 w-[380px] max-w-[calc(100vw-2rem)] transition-all duration-300"
-          style={{
-            opacity: quote3Opacity,
-            transform: `translateY(${(1 - quote3Opacity) * 20}px)`,
-          }}
-        >
-          <div className="p-5 md:p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#F3D403] block mb-2">
-              03 — RESOLVE
-            </span>
-            <blockquote className="font-sans text-lg md:text-xl font-medium leading-snug tracking-tight text-white">
-              “Whatever comes our way... whatever battle we have raging inside us, we always have a choice. This is my brand new day.”
-            </blockquote>
-            <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#F3D403]">
-                SPIDER-MAN: BRAND NEW DAY
-              </span>
-            </figcaption>
-          </div>
+          {quote3Active && (
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-md shadow-xl">
+              <span className="h-2 w-2 rounded-full bg-[#F3D403] shadow-[0_0_8px_#F3D403] animate-pulse" />
+              <p className="font-mono text-xs text-zinc-200 tracking-wide">
+                <span className="text-[#F3D403] font-bold">RESOLVE:</span> “They don't know who's under the mask. This is my fresh start.”
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Bottom Scrubber */}
@@ -287,8 +238,8 @@ export const SpidermanCinematicChapter: React.FC = () => {
             />
           </div>
           <div className="mx-6 flex items-center justify-between pb-4 font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-400 md:mx-10">
-            <span>SPIDER-VERSE PROTOCOL // PLAYBACK</span>
-            <span className="hidden sm:inline">HIGH-ALTITUDE FREEFALL</span>
+            <span>MANHATTAN GIRDER PATROL // 5K UHD</span>
+            <span className="hidden sm:inline">POLICE SCANNER MONITORING</span>
             <span className="animate-bounce">Scroll ↓</span>
           </div>
         </div>

@@ -98,12 +98,6 @@ export const HeroSelector: React.FC<HeroSelectorProps> = ({
   if (!isOpen) return null;
 
   const handleHeroClick = (heroId: 'ironman' | 'spiderman') => {
-    soundEngine.playHeroSwitch();
-    if (heroId === 'ironman') {
-      soundEngine.playRepulsor();
-    } else {
-      soundEngine.playWebShoot();
-    }
     onSelectHero(heroId);
     onClose();
   };

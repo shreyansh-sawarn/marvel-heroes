@@ -29,6 +29,27 @@ export const SpidermanHeroSequencer: React.FC = () => {
 
   const lastStageRef = useRef<SpiderStage>('perch');
 
+  // 3D Gyroscopic Mouse Parallax tracking
+  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const [spiderSenseActive, setSpiderSenseActive] = useState(false);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      const normX = (e.clientX / window.innerWidth) * 2 - 1;
+      const normY = (e.clientY / window.innerHeight) * 2 - 1;
+      mouseRef.current.targetX = normX;
+      mouseRef.current.targetY = normY;
+    };
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMouseMove);
+  }, []);
+
+  const triggerSpiderSense = useCallback(() => {
+    setSpiderSenseActive(true);
+    soundEngine.playSpiderSense();
+    setTimeout(() => setSpiderSenseActive(false), 900);
+  }, []);
+
   // Preload single authentic high-resolution images (Zero stitching, zero seams)
   useEffect(() => {
     const assets = [
@@ -76,74 +97,91 @@ export const SpidermanHeroSequencer: React.FC = () => {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Determine active scenes and cross-fade
-    let imgA: HTMLImageElement | undefined;
-    let imgB: HTMLImageElement | undefined;
-    let blend = 0;
-    let stage: SpiderStage = 'perch';
+    // Lerp mouse parallax for silky smooth gyro response
+    mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.08;
+    mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.08;
+    const gyroPanX = mouseRef.current.x * 24 * dpr;
+    const gyroPanY = mouseRef.current.y * 16 * dpr;
+    const gyroRot = mouseRef.current.x * 0.012;
 
-    // Dynamic cinematic camera motion
+    // Stage definition
+    let stage: SpiderStage = 'perch';
+    let imgA: HTMLImageElement | undefined = imagesRef.current.perch;
+    let imgB: HTMLImageElement | undefined = undefined;
+    let blend = 0;
     let camScale = 1.0;
-    let camPanX = 0;
-    let camPanY = 0;
+    let camPanX = gyroPanX;
+    let camPanY = gyroPanY;
 
     if (p < 0.32) {
+      // STAGE 1: ROOFTOP PERCH & PRECOGNITION
       stage = 'perch';
-      const subT = p / 0.32;
       imgA = imagesRef.current.perch;
-      imgB = imagesRef.current.leap;
-      blend = subT > 0.72 ? (subT - 0.72) / 0.28 : 0;
-      camScale = 1.0 + subT * 0.04;
-      camPanX = subT * -15 * dpr;
-      camPanY = subT * 8 * dpr;
+      const sub = p / 0.32;
+      camScale = 1.0 + sub * 0.05;
+      camPanY = gyroPanY + sub * -15 * dpr;
     } else if (p < 0.68) {
+      // STAGE 2: HIGH-ALTITUDE DIVE & HIGH-TENSILE WEB SHOT
       stage = 'dive';
-      const subT = (p - 0.32) / 0.36;
+      const sub = (p - 0.32) / 0.36;
       imgA = imagesRef.current.leap;
-      imgB = imagesRef.current.swing;
-      blend = subT > 0.72 ? (subT - 0.72) / 0.28 : 0;
-      camScale = 1.02 + subT * 0.05;
-      camPanX = -15 * dpr + subT * 30 * dpr;
-      camPanY = 8 * dpr - subT * 16 * dpr;
+      camScale = 1.05 + sub * 0.08;
+      camPanY = gyroPanY + sub * 25 * dpr;
+      if (sub < 0.12) {
+        imgB = imagesRef.current.perch;
+        blend = 1 - sub / 0.12;
+      }
     } else {
-      stage = p < 0.88 ? 'swing' : 'apex';
-      const subT = (p - 0.68) / 0.32;
+      // STAGE 3: CANYON ARC SWING
+      stage = 'swing';
+      const sub = (p - 0.68) / 0.32;
       imgA = imagesRef.current.swing;
-      imgB = imagesRef.current.swing;
-      blend = 0;
-      camScale = 1.03 + Math.sin(subT * Math.PI) * 0.03;
-      camPanX = 15 * dpr - subT * 20 * dpr;
-      camPanY = -8 * dpr + subT * 12 * dpr;
+      camScale = 1.1 + sub * 0.06;
+      camPanX = gyroPanX + Math.sin(sub * Math.PI) * 20 * dpr;
+      camPanY = gyroPanY + sub * -20 * dpr;
+      if (sub < 0.12) {
+        imgB = imagesRef.current.leap;
+        blend = 1 - sub / 0.12;
+      }
     }
 
-    // Helper to draw a single unified photo with responsive object-fit: cover
+    setCurrentStage(stage);
+
+    // High performance widescreen drawing helper with zero stretching
     const drawUnifiedPhoto = (
       img: HTMLImageElement,
-      opacity: number,
+      alpha: number,
       scale: number,
-      px: number,
-      py: number,
-      anchorY: number = 0.42
+      panX: number,
+      panY: number,
+      focusAnchorY: number = 0.45
     ) => {
-      if (!img || !img.complete || opacity <= 0) return { drawW: 0, drawH: 0, offsetX: 0, offsetY: 0 };
       ctx.save();
-      ctx.globalAlpha = opacity;
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
 
       const imgAspect = img.naturalWidth / img.naturalHeight;
       const canvasAspect = w / h;
+
       let drawW: number;
       let drawH: number;
 
       if (canvasAspect > imgAspect) {
-        drawW = w * scale;
-        drawH = (w / imgAspect) * scale;
+        drawW = w;
+        drawH = w / imgAspect;
       } else {
-        drawH = h * scale;
-        drawW = (h * imgAspect) * scale;
+        drawH = h;
+        drawW = h * imgAspect;
       }
 
-      const offsetX = (w - drawW) / 2 + px;
-      const offsetY = (h - drawH) * anchorY + py;
+      drawW *= scale;
+      drawH *= scale;
+
+      const offsetX = (w - drawW) / 2 + panX;
+      const offsetY = (h - drawH) * focusAnchorY + panY;
+
+      ctx.translate(w / 2, h / 2);
+      ctx.rotate(gyroRot);
+      ctx.translate(-w / 2, -h / 2);
 
       ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
       ctx.restore();
@@ -152,7 +190,7 @@ export const SpidermanHeroSequencer: React.FC = () => {
     };
 
     // Stage-specific framing anchor
-    const anchorY = stage === 'swing' || stage === 'apex' ? 0.18 : 0.45;
+    const anchorY = stage === 'swing' ? 0.18 : 0.45;
 
     // 1. Draw Primary Scene A
     let activeBounds = { drawW: w, drawH: h, offsetX: 0, offsetY: 0 };
@@ -184,27 +222,38 @@ export const SpidermanHeroSequencer: React.FC = () => {
     ctx.fillRect(0, 0, w, h);
 
     // 4. Spider-Sense Precognitive Wave Arcs (Positioned right over Spider-Man's actual head in Brand New Day spire perch)
-    if (stage === 'perch' && p < 0.24) {
+    if ((stage === 'perch' && p < 0.24) || spiderSenseActive) {
       ctx.save();
-      const sensePulse = (Date.now() / 450) % 1;
+      const sensePulse = (Date.now() / (spiderSenseActive ? 280 : 450)) % 1;
       const headX = activeBounds.offsetX + activeBounds.drawW * 0.535;
       const headY = activeBounds.offsetY + activeBounds.drawH * 0.23;
 
+      const boost = spiderSenseActive ? 1.6 : 1.0;
       ctx.beginPath();
-      ctx.arc(headX, headY, (28 + sensePulse * 24) * dpr, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.arc(headX, headY, (28 + sensePulse * 36) * dpr * boost, Math.PI * 1.05, Math.PI * 1.95);
       ctx.strokeStyle = `rgba(243, 212, 3, ${1 - sensePulse})`;
-      ctx.lineWidth = 2.5 * dpr;
+      ctx.lineWidth = 3 * dpr;
       ctx.shadowColor = '#F3D403';
-      ctx.shadowBlur = 14 * dpr;
+      ctx.shadowBlur = 18 * dpr;
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(headX, headY, (42 + sensePulse * 28) * dpr, Math.PI * 1.1, Math.PI * 1.9);
-      ctx.strokeStyle = `rgba(230, 36, 41, ${(1 - sensePulse) * 0.85})`;
-      ctx.lineWidth = 2 * dpr;
+      ctx.arc(headX, headY, (44 + sensePulse * 48) * dpr * boost, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.strokeStyle = `rgba(230, 36, 41, ${(1 - sensePulse) * 0.95})`;
+      ctx.lineWidth = 2.5 * dpr;
       ctx.shadowColor = '#E62429';
-      ctx.shadowBlur = 12 * dpr;
+      ctx.shadowBlur = 16 * dpr;
       ctx.stroke();
+
+      if (spiderSenseActive) {
+        ctx.beginPath();
+        ctx.arc(headX, headY, (65 + sensePulse * 70) * dpr, Math.PI * 1.0, Math.PI * 2.0);
+        ctx.strokeStyle = `rgba(0, 180, 216, ${(1 - sensePulse) * 0.75})`;
+        ctx.lineWidth = 2 * dpr;
+        ctx.shadowColor = '#00B4D8';
+        ctx.shadowBlur = 24 * dpr;
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -282,7 +331,6 @@ export const SpidermanHeroSequencer: React.FC = () => {
     if (stage !== lastStageRef.current) {
       if (stage === 'dive') soundEngine.playWebShoot();
       if (stage === 'swing') soundEngine.playWhoosh(1.4);
-      if (stage === 'apex') soundEngine.playWhoosh(1.0);
       if (stage === 'perch') soundEngine.playSpiderSense();
       lastStageRef.current = stage;
     }
@@ -335,7 +383,9 @@ export const SpidermanHeroSequencer: React.FC = () => {
         {/* Main 3D Canvas Stage */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full object-cover"
+          onClick={triggerSpiderSense}
+          title="Click to trigger Spider-Sense"
+          className="absolute inset-0 w-full h-full object-cover cursor-pointer"
         />
 
         {/* HUD Spider Corner Brackets */}
@@ -372,106 +422,79 @@ export const SpidermanHeroSequencer: React.FC = () => {
           />
         </div>
 
-        {/* Intro Hero Typography (Cleanly positioned on bottom-left) */}
+        {/* Intro Hero Typography (Cleanly positioned on bottom-left, sleek & uncluttered) */}
         <div
-          className="absolute left-6 bottom-16 md:left-12 md:bottom-20 z-10 flex flex-col items-start gap-3 p-6 md:p-8 rounded-2xl border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-xl shadow-2xl pointer-events-none transition-all duration-150 max-w-xl"
+          className="absolute left-6 bottom-16 md:left-12 md:bottom-20 z-10 flex flex-col items-start gap-2.5 p-5 md:p-6 rounded-2xl border border-white/10 bg-[#0A0A0C]/75 backdrop-blur-md shadow-2xl pointer-events-none transition-all duration-150 max-w-sm"
           style={{
             opacity: introOpacity,
             transform: `translateY(${(1 - introOpacity) * 20}px)`,
           }}
         >
-          <span
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.05] px-3.5 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
-            style={{
-              boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px -8px rgba(0,180,216,0.3)',
-            }}
-          >
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] shadow-[0_0_10px_rgba(0,180,216,0.85)]" />
+          <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.24em] text-[#00B4D8]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] animate-pulse" />
             EARTH-616 // BRAND NEW DAY
-          </span>
+          </div>
 
-          <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[0.98] tracking-tighter text-white">
-            Spider-Man.<br />
-            <span className="text-[#E62429]">Brand New Day</span>
+          <h1 className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold leading-none tracking-tight text-white">
+            Spider-Man
           </h1>
 
-          <p className="max-w-[38ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-300">
-            A fresh start in New York City. Hand-stitched classic red & blue suit, homemade web fluid cartridges, and NYPD scanner monitoring. Scroll to dive off the Manhattan spire.
+          <p className="font-mono text-[11px] text-zinc-400 tracking-wide">
+            Classic Red & Blue · Manhattan Spire · NYPD 460.125 MHz
           </p>
-        </div>
 
-        {/* FLOATING SPIDER-MAN QUOTE CARDS (Positioned on Left/Center during scroll so they never block Spider-Man on the right) */}
-        {/* Quote 1 */}
-        <div
-          className="pointer-events-none absolute top-[28%] left-6 md:left-14 z-20 w-[380px] max-w-[90vw] transition-all duration-300"
-          style={{
-            opacity: quote1Opacity,
-            transform: `translateY(${(1 - quote1Opacity) * 20}px)`,
-          }}
-        >
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8] block mb-2">
-              01 — FRESH START
-            </span>
-            <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “They may not remember Peter Parker... but New York City will always have Spider-Man.”
-            </blockquote>
-            <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8]">
-                SPIDER-MAN: BRAND NEW DAY
-              </span>
-            </figcaption>
+          <div className="mt-1 flex items-center gap-2 text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
+            <span className="h-1 w-1 rounded-full bg-[#E62429]" />
+            Click canvas to trigger Spider-Sense
           </div>
         </div>
 
-        {/* Quote 2 */}
-        <div
-          className="pointer-events-none absolute top-1/2 -translate-y-1/2 left-6 md:left-14 z-20 w-[380px] max-w-[90vw] transition-all duration-300"
-          style={{
-            opacity: quote2Opacity,
-            transform: `translateY(${(1 - quote2Opacity) * 20}px)`,
-          }}
-        >
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429] block mb-2">
-              02 — BACK TO BASICS
-            </span>
-            <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “No Stark tech. No safety nets. Just a kid from Queens, a sewing machine, and a police scanner.”
-            </blockquote>
-            <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429]">
-                SPIDER-MAN: BRAND NEW DAY
-              </span>
-            </figcaption>
-          </div>
-        </div>
+        {/* MINIMAL SLEEK FLOATING QUOTE CAPSULES (Uncluttered, 85%+ Visual Freedom) */}
+        <div className="pointer-events-none absolute bottom-16 left-6 md:left-12 z-20 max-w-md transition-all duration-300">
+          {quote1Opacity > 0 && (
+            <div
+              className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-md shadow-xl transition-all duration-300"
+              style={{
+                opacity: quote1Opacity,
+                transform: `translateY(${(1 - quote1Opacity) * 12}px)`,
+              }}
+            >
+              <span className="h-2 w-2 rounded-full bg-[#00B4D8] shadow-[0_0_8px_#00B4D8] animate-pulse" />
+              <p className="font-mono text-xs text-zinc-200 tracking-wide">
+                <span className="text-[#00B4D8] font-bold">PETER:</span> “NYC will always have Spider-Man.”
+              </p>
+            </div>
+          )}
 
-        {/* Quote 3 */}
-        <div
-          className="pointer-events-none absolute bottom-24 left-6 md:bottom-28 md:left-14 z-20 w-[380px] max-w-[90vw] transition-all duration-300"
-          style={{
-            opacity: quote3Opacity,
-            transform: `translateY(${(1 - quote3Opacity) * 20}px)`,
-          }}
-        >
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#F3D403] block mb-2">
-              03 — THE PROMISE
-            </span>
-            <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “You have a gift. You have power. And with great power, there must also come great responsibility.”
-            </blockquote>
-            <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">May Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#F3D403]">
-                SPIDER-MAN: NO WAY HOME
-              </span>
-            </figcaption>
-          </div>
+          {quote2Opacity > 0 && (
+            <div
+              className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-md shadow-xl transition-all duration-300"
+              style={{
+                opacity: quote2Opacity,
+                transform: `translateY(${(1 - quote2Opacity) * 12}px)`,
+              }}
+            >
+              <span className="h-2 w-2 rounded-full bg-[#E62429] shadow-[0_0_8px_#E62429] animate-pulse" />
+              <p className="font-mono text-xs text-zinc-200 tracking-wide">
+                <span className="text-[#E62429] font-bold">TACTICAL:</span> “No safety nets. Homemade web cartridges active.”
+              </p>
+            </div>
+          )}
+
+          {quote3Opacity > 0 && (
+            <div
+              className="flex items-center gap-3 px-4 py-2.5 rounded-full border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-md shadow-xl transition-all duration-300"
+              style={{
+                opacity: quote3Opacity,
+                transform: `translateY(${(1 - quote3Opacity) * 12}px)`,
+              }}
+            >
+              <span className="h-2 w-2 rounded-full bg-[#F3D403] shadow-[0_0_8px_#F3D403] animate-pulse" />
+              <p className="font-mono text-xs text-zinc-200 tracking-wide">
+                <span className="text-[#F3D403] font-bold">MAY:</span> “With great power comes great responsibility.”
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Bottom Scrubber & Sequence Stage Indicator */}

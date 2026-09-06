@@ -273,6 +273,135 @@ class SoundEngine {
     osc.start(t);
     osc.stop(t + 0.4);
   }
+
+  // Arc Reactor High-Voltage Charge
+  public playArcReactorCharge() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, t);
+    osc.frequency.exponentialRampToValueAtTime(1800, t + 1.2);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, t);
+    filter.frequency.exponentialRampToValueAtTime(4500, t + 1.2);
+    filter.Q.setValueAtTime(8, t);
+
+    gain.gain.setValueAtTime(0.01, t);
+    gain.gain.linearRampToValueAtTime(0.35, t + 1.0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.35);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 1.4);
+
+    // Resonant pulse chime at peak
+    setTimeout(() => {
+      if (this.isMuted || !this.ctx) return;
+      const peakT = this.ctx.currentTime;
+      const peakOsc = this.ctx.createOscillator();
+      const peakGain = this.ctx.createGain();
+      peakOsc.type = 'sine';
+      peakOsc.frequency.setValueAtTime(1200, peakT);
+      peakGain.gain.setValueAtTime(0.3, peakT);
+      peakGain.gain.exponentialRampToValueAtTime(0.001, peakT + 0.6);
+      peakOsc.connect(peakGain);
+      peakGain.connect(this.ctx.destination);
+      peakOsc.start(peakT);
+      peakOsc.stop(peakT + 0.65);
+    }, 1100);
+  }
+
+  // Tactical JARVIS Audio / Voice Telemetry
+  public playJarvisVoice(phrase: string) {
+    if (this.isMuted) return;
+    this.playHudClick();
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(phrase);
+      utterance.rate = 1.08;
+      utterance.pitch = 0.95;
+      utterance.volume = 0.85;
+
+      const voices = window.speechSynthesis.getVoices();
+      const ukVoice = voices.find(v => v.lang.includes('en-GB') || v.name.includes('UK') || v.name.includes('Oliver') || v.name.includes('George'));
+      if (ukVoice) utterance.voice = ukVoice;
+
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // Enhanced Hero Switch Audio
+  public playHeroSwitchDetailed(hero: 'ironman' | 'spiderman') {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    if (hero === 'ironman') {
+      // Iron Man: Heavy mechanical clamp + repulsor flare
+      this.playImpact();
+      setTimeout(() => this.playRepulsor(), 140);
+    } else {
+      // Spider-Man: Rapid double web thwip + spider-sense chime
+      this.playWebShoot();
+      setTimeout(() => this.playWebShoot(), 160);
+      setTimeout(() => this.playSpiderSense(), 260);
+    }
+  }
+
+  // Web-Shooter Ballistic Firing Modes
+  public playWebBallistic(mode: 'strand' | 'grenade' | 'ricochet') {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+
+    if (mode === 'strand') {
+      this.playWebShoot();
+    } else if (mode === 'grenade') {
+      // Heavy pneumatic pop + dense splatter
+      this.playWebShoot();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, t + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.3);
+      gain.gain.setValueAtTime(0.4, t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t + 0.05);
+      osc.stop(t + 0.36);
+    } else if (mode === 'ricochet') {
+      // Triple bounce deflection
+      [0, 0.09, 0.18].forEach((delay, idx) => {
+        if (!this.ctx) return;
+        const pingT = t + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1800 + idx * 400, pingT);
+        gain.gain.setValueAtTime(0.2, pingT);
+        gain.gain.exponentialRampToValueAtTime(0.001, pingT + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(pingT);
+        osc.stop(pingT + 0.09);
+      });
+    }
+  }
 }
 
 export const soundEngine = new SoundEngine();

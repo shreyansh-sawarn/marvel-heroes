@@ -9,6 +9,7 @@ import { IronManCinematic } from './components/ironman/IronManCinematic';
 import { IronManSystems } from './components/ironman/IronManSystems';
 import { HeroSelector } from './components/ui/HeroSelector';
 import { BackgroundParticles } from './components/ui/BackgroundParticles';
+import { HeroTransitionCurtain } from './components/ui/HeroTransitionCurtain';
 import {
   ArrowUp,
   Sparkles,
@@ -26,6 +27,7 @@ export const App: React.FC = () => {
   const [activeHero, setActiveHero] = useState<'spiderman' | 'ironman'>('spiderman');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isHeroSelectorOpen, setIsHeroSelectorOpen] = useState(false);
+  const [transitionTarget, setTransitionTarget] = useState<'ironman' | 'spiderman' | null>(null);
 
   // Sync data-hero on document.documentElement for global CSS variables
   useEffect(() => {
@@ -69,8 +71,18 @@ export const App: React.FC = () => {
   };
 
   const handleHeroSelect = (heroId: 'ironman' | 'spiderman') => {
-    setActiveHero(heroId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (heroId === activeHero) return;
+    setTransitionTarget(heroId);
+    soundEngine.playHeroSwitchDetailed(heroId);
+
+    setTimeout(() => {
+      setActiveHero(heroId);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 450);
+
+    setTimeout(() => {
+      setTransitionTarget(null);
+    }, 1200);
   };
 
   const isIronMan = activeHero === 'ironman';
@@ -80,6 +92,8 @@ export const App: React.FC = () => {
       data-hero={activeHero}
       className="min-h-screen bg-[#08090E] text-white selection:bg-hero-primary selection:text-white relative overflow-x-clip transition-colors duration-500"
     >
+      {/* Cinematic Hero Transition Curtain */}
+      <HeroTransitionCurtain targetHero={transitionTarget} />
       {/* Universal Navbar */}
       <Navbar
         scrollProgress={scrollProgress}
