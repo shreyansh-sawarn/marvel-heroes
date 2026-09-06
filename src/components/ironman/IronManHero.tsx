@@ -1,14 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { HudFrame } from '../ui/HudFrame';
-import { soundEngine } from '../../services/soundEngine';
 
 export const IronManHero: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [scrollRatio, setScrollRatio] = useState(0);
-  const [isCharging, setIsCharging] = useState(false);
-  const [arcPower, setArcPower] = useState(100);
 
   const imagesRef = useRef<{
     mk85?: HTMLImageElement;
@@ -49,20 +46,6 @@ export const IronManHero: React.FC = () => {
       };
     });
   }, []);
-
-  // Clickable Arc Reactor Charging Trigger
-  const triggerArcReactorCharge = useCallback(() => {
-    if (isCharging) return;
-    setIsCharging(true);
-    setArcPower(125);
-    soundEngine.playArcReactorCharge();
-    soundEngine.playJarvisVoice("Arc Reactor at maximum capacity. Mark eighty-five systems online.");
-
-    setTimeout(() => {
-      setIsCharging(false);
-      setArcPower(100);
-    }, 1500);
-  }, [isCharging]);
 
   // High-performance canvas rendering
   const renderFrame = useCallback((progress: number) => {
@@ -140,10 +123,9 @@ export const IronManHero: React.FC = () => {
     };
 
     // 1. Draw Mark LXXXV Studio Armor (with top anchor so helmet is fully visible)
-    let mk85Bounds = { drawW: w, drawH: h, offsetX: 0, offsetY: 0 };
     if (mk85 && blendFlight < 1) {
       const zoom = 1.0 + progress * 0.06;
-      mk85Bounds = drawPhoto(mk85, 1 - blendFlight, zoom, gyroPanX, gyroPanY + progress * -20 * dpr, 0.12);
+      drawPhoto(mk85, 1 - blendFlight, zoom, gyroPanX, gyroPanY + progress * -20 * dpr, 0.12);
     }
 
     // 2. Draw Supersonic Launch
@@ -166,48 +148,9 @@ export const IronManHero: React.FC = () => {
     vignette.addColorStop(1, 'rgba(3, 3, 5, 0.92)');
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, w, h);
+  }, []);
 
-    // 4. Arc Reactor Interactive Bloom Pulse (precisely anchored to triangular chest core)
-    if (blendFlight < 0.6) {
-      const reactorX = mk85Bounds.offsetX + mk85Bounds.drawW * 0.4964;
-      const reactorY = mk85Bounds.offsetY + mk85Bounds.drawH * 0.3528;
-      const pulseTime = Date.now() / (isCharging ? 120 : 800);
-      const pulse = (Math.sin(pulseTime) + 1) * 0.5;
-
-      const bloomRadius = isCharging ? (75 + pulse * 50) * dpr : (32 + pulse * 16) * dpr;
-
-      ctx.save();
-      const bloomGrad = ctx.createRadialGradient(
-        reactorX,
-        reactorY,
-        2 * dpr,
-        reactorX,
-        reactorY,
-        bloomRadius
-      );
-      bloomGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-      bloomGrad.addColorStop(0.2, isCharging ? 'rgba(56, 189, 248, 0.95)' : 'rgba(56, 189, 248, 0.65)');
-      bloomGrad.addColorStop(0.6, isCharging ? 'rgba(56, 189, 248, 0.45)' : 'rgba(56, 189, 248, 0.22)');
-      bloomGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-
-      ctx.fillStyle = bloomGrad;
-      ctx.beginPath();
-      ctx.arc(reactorX, reactorY, bloomRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Reactor Reticle Crosshairs
-      if (isCharging) {
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
-        ctx.lineWidth = 1.5 * dpr;
-        ctx.beginPath();
-        ctx.arc(reactorX, reactorY, (24 + pulse * 12) * dpr, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-  }, [isCharging]);
-
-  // Continuous animation loop for gyro & reactor pulse
+  // Continuous animation loop for gyro
   useEffect(() => {
     let animId: number;
     const renderLoop = () => {
@@ -252,9 +195,7 @@ export const IronManHero: React.FC = () => {
         {/* Main 4K Canvas */}
         <canvas
           ref={canvasRef}
-          onClick={triggerArcReactorCharge}
-          title="Click to Charge Arc Reactor"
-          className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+          className="absolute inset-0 w-full h-full object-cover cursor-default"
         />
 
         {/* HUD Corner Brackets */}
@@ -283,7 +224,7 @@ export const IronManHero: React.FC = () => {
             Arc Reactor Core
           </span>
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#38BDF8] font-bold">
-            {arcPower}%
+            100%
           </span>
           <span
             aria-hidden="true"
@@ -311,11 +252,6 @@ export const IronManHero: React.FC = () => {
           <p className="font-mono text-[11px] text-zinc-400 tracking-wide">
             Nanotech Refocuser · Triangular Arc Reactor · Mach 3.4
           </p>
-
-          <div className="mt-1 flex items-center gap-2 text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-            <span className="h-1 w-1 rounded-full bg-[#38BDF8]" />
-            Click chest to charge Arc Reactor
-          </div>
         </div>
 
         {/* MINIMAL SLEEK FLOATING QUOTE CAPSULES (Uncluttered, 85%+ Visual Freedom) */}

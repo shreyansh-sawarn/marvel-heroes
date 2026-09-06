@@ -31,7 +31,7 @@ export const HEROES_ROSTER: HeroMeta[] = [
     primaryColor: '#D4A22F',
     secondaryColor: '#B91C1C',
     accentColor: '#38BDF8',
-    action: 'Mark LXXXV Flight, Arc Reactor Charging & Unibeam Blast',
+    action: 'Mark LXXXV Flight & Cinematic Unibeam Blast',
     iconName: 'flame',
     isAvailable: true,
   },

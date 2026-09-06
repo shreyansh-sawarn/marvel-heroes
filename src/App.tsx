@@ -111,7 +111,7 @@ export const App: React.FC = () => {
             {/* Iron Man Chapter 1: Mark LXXXV Nanotech Assembly & Flight */}
             <IronManHero />
 
-            {/* Iron Man Chapter 2: Arc Reactor Charging & Cinematic Unibeam */}
+            {/* Iron Man Chapter 2: Atmospheric Flight & Cinematic Unibeam */}
             <IronManCinematic />
 
             {/* Iron Man Chapter 3: Stark Industries JARVIS Diagnostic Specs */}
