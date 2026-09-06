@@ -66,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             />
             <span>
-              {isIronMan ? 'Stark / Industries' : 'Parker / Technologies'}
+              {isIronMan ? 'Stark / Industries' : 'Spider-Man / Brand New Day'}
             </span>
             <span className="text-[9px] text-zinc-400 group-hover:text-white border border-white/15 px-1.5 py-0.5 rounded bg-white/5 transition">
               SWITCH
@@ -94,10 +94,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Patrol
               </a>
               <a href="#cinematic-chapter" className="hover:text-cyan-300 transition-colors">
-                Spider-Verse
+                Brand New Day
               </a>
               <a href="#systems" className="hover:text-cyan-300 transition-colors">
-                Bio-Tech Specs
+                Suit Specs
               </a>
             </>
           )}

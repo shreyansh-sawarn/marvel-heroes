@@ -151,15 +151,18 @@ export const SpidermanHeroSequencer: React.FC = () => {
       return { drawW, drawH, offsetX, offsetY };
     };
 
+    // Stage-specific framing anchor
+    const anchorY = stage === 'swing' || stage === 'apex' ? 0.18 : 0.45;
+
     // 1. Draw Primary Scene A
     let activeBounds = { drawW: w, drawH: h, offsetX: 0, offsetY: 0 };
     if (imgA) {
-      activeBounds = drawUnifiedPhoto(imgA, 1 - blend, camScale, camPanX, camPanY);
+      activeBounds = drawUnifiedPhoto(imgA, 1 - blend, camScale, camPanX, camPanY, anchorY);
     }
 
     // 2. Draw Cross-faded Scene B
     if (imgB && blend > 0) {
-      drawUnifiedPhoto(imgB, blend, camScale * 0.99, camPanX * 0.9, camPanY * 0.9);
+      drawUnifiedPhoto(imgB, blend, camScale * 0.99, camPanX * 0.9, camPanY * 0.9, anchorY);
     }
 
     // 3. Cinematic Atmospheric Left Vignette (enhances text legibility over natural night sky)
@@ -180,15 +183,15 @@ export const SpidermanHeroSequencer: React.FC = () => {
     ctx.fillStyle = edgeGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // 4. Spider-Sense Precognitive Wave Arcs (Positioned right over Spider-Man's actual head)
+    // 4. Spider-Sense Precognitive Wave Arcs (Positioned right over Spider-Man's actual head in Brand New Day spire perch)
     if (stage === 'perch' && p < 0.24) {
       ctx.save();
       const sensePulse = (Date.now() / 450) % 1;
-      const headX = activeBounds.offsetX + activeBounds.drawW * 0.54;
-      const headY = activeBounds.offsetY + activeBounds.drawH * 0.27;
+      const headX = activeBounds.offsetX + activeBounds.drawW * 0.535;
+      const headY = activeBounds.offsetY + activeBounds.drawH * 0.23;
 
       ctx.beginPath();
-      ctx.arc(headX, headY, (24 + sensePulse * 20) * dpr, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.arc(headX, headY, (28 + sensePulse * 24) * dpr, Math.PI * 1.05, Math.PI * 1.95);
       ctx.strokeStyle = `rgba(243, 212, 3, ${1 - sensePulse})`;
       ctx.lineWidth = 2.5 * dpr;
       ctx.shadowColor = '#F3D403';
@@ -196,7 +199,7 @@ export const SpidermanHeroSequencer: React.FC = () => {
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(headX, headY, (36 + sensePulse * 24) * dpr, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.arc(headX, headY, (42 + sensePulse * 28) * dpr, Math.PI * 1.1, Math.PI * 1.9);
       ctx.strokeStyle = `rgba(230, 36, 41, ${(1 - sensePulse) * 0.85})`;
       ctx.lineWidth = 2 * dpr;
       ctx.shadowColor = '#E62429';
@@ -208,10 +211,10 @@ export const SpidermanHeroSequencer: React.FC = () => {
     // 5. Dynamic High-Tension Silk Web Line during Dive & Swing
     if (stage === 'dive') {
       ctx.save();
-      const anchorX = w * 0.94;
-      const anchorY = h * 0.06;
-      const wristX = activeBounds.offsetX + activeBounds.drawW * 0.84;
-      const wristY = activeBounds.offsetY + activeBounds.drawH * 0.25;
+      const anchorX = w * 0.88;
+      const anchorY = h * 0.08;
+      const wristX = activeBounds.offsetX + activeBounds.drawW * 0.44;
+      const wristY = activeBounds.offsetY + activeBounds.drawH * 0.15;
 
       // Anchor Flare
       ctx.beginPath();
@@ -241,10 +244,10 @@ export const SpidermanHeroSequencer: React.FC = () => {
       ctx.restore();
     } else if (stage === 'swing') {
       ctx.save();
-      const anchorX = w * 0.86;
-      const anchorY = h * 0.01;
-      const handX = activeBounds.offsetX + activeBounds.drawW * 0.54;
-      const handY = activeBounds.offsetY + activeBounds.drawH * 0.09;
+      const anchorX = w * 0.82;
+      const anchorY = h * 0.04;
+      const handX = activeBounds.offsetX + activeBounds.drawW * 0.44;
+      const handY = activeBounds.offsetY + activeBounds.drawH * 0.24;
 
       // Anchor Flare
       ctx.beginPath();
@@ -371,30 +374,30 @@ export const SpidermanHeroSequencer: React.FC = () => {
 
         {/* Intro Hero Typography (Cleanly positioned on bottom-left) */}
         <div
-          className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-start gap-3 px-6 pb-20 md:px-12 md:pb-24 pointer-events-none transition-all duration-150 max-w-xl"
+          className="absolute left-6 bottom-16 md:left-12 md:bottom-20 z-10 flex flex-col items-start gap-3 p-6 md:p-8 rounded-2xl border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-xl shadow-2xl pointer-events-none transition-all duration-150 max-w-xl"
           style={{
             opacity: introOpacity,
             transform: `translateY(${(1 - introOpacity) * 20}px)`,
           }}
         >
           <span
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.05] px-3.5 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#E62429] backdrop-blur-md"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.05] px-3.5 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
             style={{
               boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px -8px rgba(230,36,41,0.3)',
+                'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px -8px rgba(0,180,216,0.3)',
             }}
           >
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E62429] shadow-[0_0_10px_rgba(230,36,41,0.85)]" />
-            PARKER PROTOCOL // WEB-SLINGER ONLINE
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] shadow-[0_0_10px_rgba(0,180,216,0.85)]" />
+            EARTH-616 // BRAND NEW DAY
           </span>
 
           <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[0.98] tracking-tighter text-white">
-            The Amazing<br />
-            <span className="text-[#E62429]">Spider-Man.</span>
+            Spider-Man.<br />
+            <span className="text-[#E62429]">Brand New Day</span>
           </h1>
 
           <p className="max-w-[38ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-300">
-            Peter Parker. Synthetic web-fluid polymer primed. Scroll down to dive off the rooftop and slingshot across the Manhattan skyline.
+            A fresh start in New York City. Hand-stitched classic red & blue suit, homemade web fluid cartridges, and NYPD scanner monitoring. Scroll to dive off the Manhattan spire.
           </p>
         </div>
 
@@ -408,16 +411,16 @@ export const SpidermanHeroSequencer: React.FC = () => {
           }}
         >
           <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429] block mb-2">
-              01 — THE OATH
+            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8] block mb-2">
+              01 — FRESH START
             </span>
             <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “With great power comes great responsibility.”
+              “They may not remember Peter Parker... but New York City will always have Spider-Man.”
             </blockquote>
             <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
               <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429]">
-                AMAZING FANTASY #15
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8]">
+                SPIDER-MAN: BRAND NEW DAY
               </span>
             </figcaption>
           </div>
@@ -432,16 +435,16 @@ export const SpidermanHeroSequencer: React.FC = () => {
           }}
         >
           <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8] block mb-2">
-              02 — RESILIENCE
+            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429] block mb-2">
+              02 — BACK TO BASICS
             </span>
             <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “No matter how many times I get hit, I always find a way to come back.”
+              “No Stark tech. No safety nets. Just a kid from Queens, a sewing machine, and a police scanner.”
             </blockquote>
             <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
               <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8]">
-                INTO THE SPIDER-VERSE
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429]">
+                SPIDER-MAN: BRAND NEW DAY
               </span>
             </figcaption>
           </div>
@@ -456,16 +459,16 @@ export const SpidermanHeroSequencer: React.FC = () => {
           }}
         >
           <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
-            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429] block mb-2">
-              03 — NEIGHBORHOOD GUARDIAN
+            <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#F3D403] block mb-2">
+              03 — THE PROMISE
             </span>
             <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “Your friendly neighborhood Spider-Man. Always watching over New York.”
+              “You have a gift. You have power. And with great power, there must also come great responsibility.”
             </blockquote>
             <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429]">
-                THE AMAZING SPIDER-MAN
+              <span className="font-sans text-sm text-zinc-300">May Parker</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#F3D403]">
+                SPIDER-MAN: NO WAY HOME
               </span>
             </figcaption>
           </div>

@@ -156,7 +156,7 @@ export const SpidermanCinematicChapter: React.FC = () => {
         <div className="pointer-events-none absolute left-6 top-16 z-10 flex items-center gap-2 md:left-10 md:top-20">
           <div className="h-px w-8 bg-[#00B4D8]/70" />
           <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-400">
-            Spider-Verse Sync — Live
+            NYPD Police Band 460.125 MHz — Live
           </span>
         </div>
         <div className="pointer-events-none absolute right-6 top-16 z-10 flex items-center gap-3 md:right-10 md:top-20">
@@ -170,61 +170,61 @@ export const SpidermanCinematicChapter: React.FC = () => {
         </div>
 
         {/* Top Right Title — Dual Morph */}
-        <div className="pointer-events-none absolute right-6 top-20 z-10 flex max-w-[44ch] flex-col items-end gap-3 text-right p-6 rounded-2xl border border-white/10 bg-[#0A0A0C]/75 backdrop-blur-xl shadow-2xl md:right-12 md:top-24">
+        <div className="pointer-events-none absolute right-4 top-16 left-4 md:left-auto md:right-12 md:top-24 z-10 flex max-w-[44ch] flex-col items-end gap-2 md:gap-3 text-right p-4 md:p-6 rounded-2xl border border-white/10 bg-[#0A0A0C]/80 backdrop-blur-xl shadow-2xl">
           <span
-            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-3.5 py-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
+            className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 md:px-3.5 md:py-1.5 font-mono text-[9px] md:text-[10px] font-medium uppercase tracking-[0.22em] text-[#00B4D8] backdrop-blur-md"
             style={{
               boxShadow:
                 'inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px -8px rgba(0,180,216,0.25)',
             }}
           >
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#00B4D8] shadow-[0_0_10px_rgba(0,180,216,0.85)]" />
-            THE WEB OF DESTINY
+            NYC PATROL // POLICE SCANNER LIVE
           </span>
 
-          <div className="relative self-stretch h-24 md:h-28">
+          <div className="relative self-stretch h-20 md:h-28">
             <h2
-              className="font-sans text-3xl font-extrabold leading-[0.98] tracking-tighter text-white md:text-5xl lg:text-6xl transition-opacity duration-200"
+              className="font-sans text-2xl md:text-5xl lg:text-6xl font-extrabold leading-[0.98] tracking-tighter text-white transition-opacity duration-200"
               style={{ opacity: snapTitle1Opacity }}
             >
-              What's up,<br />
-              <span className="text-[#00B4D8]">Danger?</span>
+              A fresh start.<br />
+              <span className="text-[#00B4D8]">Brand New Day.</span>
             </h2>
 
             <h2
-              className="absolute inset-0 font-sans text-3xl font-extrabold leading-[0.98] tracking-tighter text-white md:text-5xl lg:text-6xl transition-opacity duration-200"
+              className="absolute inset-0 font-sans text-2xl md:text-5xl lg:text-6xl font-extrabold leading-[0.98] tracking-tighter text-white transition-opacity duration-200"
               style={{ opacity: snapTitle2Opacity }}
             >
-              It's a<br />
-              <span className="text-[#E62429]">Leap of Faith.</span>
+              Friendly Neighborhood<br />
+              <span className="text-[#E62429]">Spider-Man.</span>
             </h2>
           </div>
 
-          <p className="max-w-[36ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-300">
-            A freefall through the Manhattan skyline. Every leap, every swing is a test of precision, reflexes, and raw determination.
+          <p className="max-w-[36ch] font-sans text-xs md:text-sm leading-relaxed text-zinc-300 hidden sm:block">
+            Peter Parker diving through the Manhattan skyline. High-viscosity tensile webbing, classic pendulum swing dynamics, and raw street-level instincts.
           </p>
         </div>
 
         {/* Left Side Quote Cards */}
         {/* Quote 1 */}
         <div
-          className="pointer-events-none absolute top-[24%] left-6 md:left-14 z-20 w-[380px] max-w-[90vw] transition-all duration-300"
+          className="pointer-events-none absolute bottom-20 left-4 md:bottom-auto md:top-[24%] md:left-14 z-20 w-[380px] max-w-[calc(100vw-2rem)] transition-all duration-300"
           style={{
             opacity: quote1Opacity,
             transform: `translateY(${(1 - quote1Opacity) * 20}px)`,
           }}
         >
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
+          <div className="p-5 md:p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#00B4D8] block mb-2">
-              01 — COURAGE
+              01 — IDENTITY
             </span>
-            <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “When will I know I'm ready? You won't. It's a leap of faith.”
+            <blockquote className="font-sans text-lg md:text-xl font-medium leading-snug tracking-tight text-white">
+              “They don't know who's under the mask anymore. And that's exactly why I have to keep fighting.”
             </blockquote>
             <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Peter B. Parker</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-                INTO THE SPIDER-VERSE
+              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#00B4D8]">
+                SPIDER-MAN: BRAND NEW DAY
               </span>
             </figcaption>
           </div>
@@ -232,23 +232,23 @@ export const SpidermanCinematicChapter: React.FC = () => {
 
         {/* Quote 2 */}
         <div
-          className="pointer-events-none absolute top-1/2 -translate-y-1/2 left-6 md:left-14 z-20 w-[380px] max-w-[90vw] transition-all duration-300"
+          className="pointer-events-none absolute bottom-20 left-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-14 z-20 w-[380px] max-w-[calc(100vw-2rem)] transition-all duration-300"
           style={{
             opacity: quote2Opacity,
             transform: `translateY(${(1 - quote2Opacity) * 20}px)`,
           }}
         >
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
+          <div className="p-5 md:p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#E62429] block mb-2">
-              02 — INCLUSION
+              02 — STREET PATROL
             </span>
-            <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “Anyone can wear the mask. You could wear the mask.”
+            <blockquote className="font-sans text-lg md:text-xl font-medium leading-snug tracking-tight text-white">
+              “Someone has to look out for the little guy. Especially when no one else is looking.”
             </blockquote>
             <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Miles Morales</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-                ACROSS THE SPIDER-VERSE
+              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#E62429]">
+                SPIDER-MAN: BRAND NEW DAY
               </span>
             </figcaption>
           </div>
@@ -256,23 +256,23 @@ export const SpidermanCinematicChapter: React.FC = () => {
 
         {/* Quote 3 */}
         <div
-          className="pointer-events-none absolute bottom-24 left-6 md:bottom-28 md:left-14 z-20 w-[380px] max-w-[90vw] transition-all duration-300"
+          className="pointer-events-none absolute bottom-20 left-4 md:bottom-28 md:left-14 z-20 w-[380px] max-w-[calc(100vw-2rem)] transition-all duration-300"
           style={{
             opacity: quote3Opacity,
             transform: `translateY(${(1 - quote3Opacity) * 20}px)`,
           }}
         >
-          <div className="p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
+          <div className="p-5 md:p-6 rounded-2xl border border-white/10 bg-[#121318]/90 backdrop-blur-xl shadow-2xl">
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#F3D403] block mb-2">
-              03 — PURPOSE
+              03 — RESOLVE
             </span>
-            <blockquote className="font-sans text-xl font-medium leading-snug tracking-tight text-white">
-              “We're the only ones who can save the city. Let's make it count.”
+            <blockquote className="font-sans text-lg md:text-xl font-medium leading-snug tracking-tight text-white">
+              “Whatever comes our way... whatever battle we have raging inside us, we always have a choice. This is my brand new day.”
             </blockquote>
             <figcaption className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <span className="font-sans text-sm text-zinc-300">Spider-Man</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
-                EARTH-616
+              <span className="font-sans text-sm text-zinc-300">Peter Parker</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#F3D403]">
+                SPIDER-MAN: BRAND NEW DAY
               </span>
             </figcaption>
           </div>

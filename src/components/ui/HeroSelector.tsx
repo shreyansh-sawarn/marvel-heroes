@@ -14,8 +14,8 @@ export const HEROES_ROSTER: HeroMeta[] = [
   {
     id: 'spiderman',
     name: 'Spider-Man',
-    alias: 'Peter Parker',
-    tagline: 'Your Friendly Neighborhood Spider-Man',
+    alias: 'Peter Parker (Tom Holland / Brand New Day)',
+    tagline: 'NYC Fresh Start · Classic Hand-Crafted Suit · Street-Level Patrol',
     primaryColor: '#E23636',
     secondaryColor: '#0B3C5D',
     accentColor: '#00B4D8',
