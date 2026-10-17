@@ -55,6 +55,9 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
     const img = new Image();
     img.src = '/assets/miles_hero.png';
 
+    const bgImg = new Image();
+    bgImg.src = '/assets/nyc_skyline.jpg';
+
     let lastDrawTime = 0;
     const targetFps = is12Fps ? 12 : 60;
     const frameInterval = 1000 / targetFps;
@@ -67,54 +70,75 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
-      // Inverted Brooklyn Skyline (What's Up Danger)
+      // Deep Brooklyn Twilight Atmosphere
       const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, '#0F051D');
-      grad.addColorStop(0.5, '#280A3C');
-      grad.addColorStop(1, '#080914');
+      grad.addColorStop(0, '#0A0518');
+      grad.addColorStop(0.4, '#1C062E');
+      grad.addColorStop(0.7, '#2D0A46');
+      grad.addColorStop(1, '#05060E');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      // Chromatic Glitch Offset
-      const glitchX = (Math.random() - 0.5) * (scrollProgress > 0.4 ? 8 : 2);
-      const glitchY = (Math.random() - 0.5) * (scrollProgress > 0.4 ? 8 : 2);
+      // Inverted City Backdrop (What's Up Danger)
+      if (bgImg.complete && bgImg.naturalWidth > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        // Invert vertically so skyscrapers hang from the top of the sky
+        ctx.translate(width / 2, height * 0.35);
+        ctx.scale(1, -1);
+        const bgScale = Math.max(width / bgImg.naturalWidth, (height * 0.7) / bgImg.naturalHeight);
+        const bw = bgImg.naturalWidth * bgScale;
+        const bh = bgImg.naturalHeight * bgScale;
+        ctx.drawImage(bgImg, -bw / 2, -bh / 2, bw, bh);
+        ctx.restore();
+      }
 
-      // Draw stylized inverted skyscrapers hanging from the sky
+      // Chromatic Glitch Offset
+      const glitchX = (Math.random() - 0.5) * (scrollProgress > 0.4 ? 12 : 4);
+      const glitchY = (Math.random() - 0.5) * (scrollProgress > 0.4 ? 12 : 4);
+
+      // Stylized inverted high-rise silhouettes
       ctx.save();
-      ctx.fillStyle = '#050711';
-      const buildingCount = 14;
+      const buildingCount = 16;
       const bWidth = width / buildingCount;
       for (let i = 0; i < buildingCount; i++) {
-        const bHeight = 150 + Math.sin(i * 1.5) * 120 + scrollProgress * 100;
+        const bHeight = 160 + Math.sin(i * 1.4) * 110 + scrollProgress * 120;
+        ctx.fillStyle = '#070914';
         ctx.fillRect(i * bWidth + glitchX, 0, bWidth - 4, bHeight);
 
-        // Windows with neon cyan/yellow lights
-        ctx.fillStyle = i % 2 === 0 ? 'rgba(250, 204, 21, 0.4)' : 'rgba(6, 182, 212, 0.4)';
-        for (let wy = 20; wy < bHeight - 20; wy += 25) {
-          ctx.fillRect(i * bWidth + 8 + glitchX, wy, 6, 12);
-          ctx.fillRect(i * bWidth + 20 + glitchX, wy, 6, 12);
+        // Windows with neon cyan and yellow lights
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(250, 204, 21, 0.45)' : 'rgba(6, 182, 212, 0.45)';
+        for (let wy = 20; wy < bHeight - 20; wy += 24) {
+          ctx.fillRect(i * bWidth + 8 + glitchX, wy, 5, 10);
+          ctx.fillRect(i * bWidth + 18 + glitchX, wy, 5, 10);
         }
-        ctx.fillStyle = '#050711';
       }
       ctx.restore();
 
-      // Draw Miles diving upside-down
+      // Draw Miles diving upside-down (Proportionally scaled to viewport)
       const centerX = width / 2;
-      const centerY = height * 0.45 + Math.sin(scrollProgress * Math.PI) * 60;
-      const milesScale = 0.85 + scrollProgress * 0.35;
+      const centerY = height * 0.48 + Math.sin(scrollProgress * Math.PI) * 50;
+      const milesScale = 0.95 + scrollProgress * 0.25;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.68, 580);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(milesScale, milesScale);
 
-        // Chromatic split (Spider-Verse 3D Comic Offset)
-        ctx.globalAlpha = 0.6;
-        ctx.drawImage(img, -180 + glitchX * 2, -180 + glitchY * 2, 360, 360);
-        ctx.drawImage(img, -180 - glitchX * 2, -180 - glitchY * 2, 360, 360);
+        // Chromatic split (Spider-Verse 3D Comic Halftone Offset)
+        ctx.globalAlpha = 0.5;
+        ctx.drawImage(img, -renderW / 2 + glitchX * 2.5, -renderH / 2 + glitchY * 2.5, renderW, renderH);
+        ctx.drawImage(img, -renderW / 2 - glitchX * 2.5, -renderH / 2 - glitchY * 2.5, renderW, renderH);
 
         ctx.globalAlpha = 1.0;
-        ctx.drawImage(img, -180, -180, 360, 360);
+        ctx.shadowColor = '#FACC15';
+        ctx.shadowBlur = scrollProgress > 0.3 ? 35 : 15;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact SVG/Canvas procedural silhouette fallback if image loading

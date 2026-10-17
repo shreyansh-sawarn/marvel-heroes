@@ -73,14 +73,21 @@ export const CarnageExperience: React.FC<CarnageProps> = ({
       }
       ctx.restore();
 
-      // Draw Carnage Hero
-      const scale = 0.95 + scrollProgress * 0.25;
+      // Draw Carnage Hero (Proportionally scaled to dominate viewport)
+      const scale = 0.98 + scrollProgress * 0.25;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.78, 660);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.drawImage(img, -220, -220, 440, 440);
+        ctx.shadowColor = '#DC2626';
+        ctx.shadowBlur = 40;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact Carnage Silhouette

@@ -76,17 +76,25 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
       ctx.restore();
 
       // Draw Spider-Punk Hero with Jerky Rotation Jitter
+      // Draw Hobie Brown Punk Hero (Proportionally scaled to viewport)
       const centerX = width / 2;
-      const centerY = height * 0.45;
-      const jitterRot = (Math.random() - 0.5) * 0.08;
-      const scale = 0.9 + scrollProgress * 0.2;
+      const centerY = height * 0.48;
+      const jitterRot = (Math.random() - 0.5) * 0.05;
+      const scale = 0.95 + scrollProgress * 0.2;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.74, 620);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.rotate(jitterRot);
         ctx.scale(scale, scale);
-        ctx.drawImage(img, -200, -200, 400, 400);
+        ctx.shadowColor = '#EC4899';
+        ctx.shadowBlur = 35;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact Spiked Mohawk Mask Silhouette

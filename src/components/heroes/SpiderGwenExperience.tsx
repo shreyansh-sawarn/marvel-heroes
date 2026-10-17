@@ -83,16 +83,23 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
         ctx.fill();
       });
 
-      // Draw Spider-Gwen Hero
+      // Draw Spider-Gwen Hero (Proportionally scaled to viewport)
       const centerX = width / 2;
-      const centerY = height * 0.45;
-      const gwenScale = 0.9 + scrollProgress * 0.2;
+      const centerY = height * 0.48;
+      const gwenScale = 0.95 + scrollProgress * 0.2;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.72, 640);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(gwenScale, gwenScale);
-        ctx.drawImage(img, -200, -200, 400, 400);
+        ctx.shadowColor = '#F43F5E';
+        ctx.shadowBlur = 35;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact artistic Ghost-Spider silhouette

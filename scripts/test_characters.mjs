@@ -34,12 +34,13 @@ async function run() {
     await page.click('[data-action="open-warp-modal"]');
     
     // Wait for modal card
-    await page.waitForSelector(`[data-hero-card="${heroId}"]`, { visible: true });
+    await page.waitForSelector(`[data-hero-card="${heroId}"]`);
+    await page.$eval(`[data-hero-card="${heroId}"]`, el => el.scrollIntoView({ block: 'center' }));
     await new Promise(r => setTimeout(r, 400));
     await page.click(`[data-hero-card="${heroId}"]`);
 
-    // Wait for transition curtain animation (1.2s)
-    await new Promise(r => setTimeout(r, 2000));
+    // Wait for transition curtain animation
+    await new Promise(r => setTimeout(r, 1800));
   }
 
   // 2. Select Miles Morales

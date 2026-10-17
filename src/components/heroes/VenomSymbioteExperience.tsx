@@ -117,14 +117,21 @@ export const VenomSymbioteExperience: React.FC<VenomProps> = ({
       });
       ctx.restore();
 
-      // Draw Venom Beast Hero
-      const scale = 0.95 + scrollProgress * 0.25;
+      // Draw Venom Beast Hero (Proportionally scaled to dominate viewport)
+      const scale = 0.98 + scrollProgress * 0.25;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.8, 680);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.drawImage(img, -220, -220, 440, 440);
+        ctx.shadowColor = '#10B981';
+        ctx.shadowBlur = 35;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact Procedural Venom Maw & Eyes

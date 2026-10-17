@@ -46,6 +46,9 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
     const img = new Image();
     img.src = '/assets/spider2099_hero.png';
 
+    const bgImg = new Image();
+    bgImg.src = '/assets/cyberpunk_2099_bg.jpg';
+
     let gridOffset = 0;
 
     const render = () => {
@@ -54,13 +57,28 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
       ctx.fillStyle = '#030612';
       ctx.fillRect(0, 0, width, height);
 
+      // Cyberpunk Nueva York Megacity Backdrop
+      if (bgImg.complete && bgImg.naturalWidth > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.4;
+        const bgScale = Math.max(width / bgImg.naturalWidth, height / bgImg.naturalHeight);
+        const bw = bgImg.naturalWidth * bgScale;
+        const bh = bgImg.naturalHeight * bgScale;
+        ctx.drawImage(bgImg, (width - bw) / 2, (height - bh) / 2, bw, bh);
+
+        // Cyberpunk blue-violet scanline wash
+        ctx.fillStyle = 'rgba(5, 11, 30, 0.55)';
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      }
+
       // Cyberpunk 3D Holographic Perspective Floor & Ceiling
       ctx.save();
       const horizonY = height * 0.55;
       const fov = 350;
 
       // Vertical perspective lines
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
       ctx.lineWidth = 1;
       for (let x = -width; x < width * 2; x += 60) {
         ctx.beginPath();
@@ -80,7 +98,7 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
         const screenY = horizonY + (lineZ / fov) * (height - horizonY);
         const topY = horizonY - (lineZ / fov) * horizonY;
 
-        ctx.strokeStyle = `rgba(255, 0, 85, ${0.4 * (lineZ / fov)})`;
+        ctx.strokeStyle = `rgba(255, 0, 85, ${0.45 * (lineZ / fov)})`;
         ctx.beginPath();
         ctx.moveTo(0, screenY);
         ctx.lineTo(width, screenY);
@@ -93,16 +111,36 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
       }
       ctx.restore();
 
-      // Draw Miguel O'Hara 2099 Hero
+      // Draw Miguel O'Hara 2099 Hero (Proportionally scaled to viewport)
       const centerX = width / 2;
-      const centerY = height * 0.45;
-      const scale = 0.9 + scrollProgress * 0.25;
+      const centerY = height * 0.48;
+      const scale = 0.95 + scrollProgress * 0.25;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.72, 600);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.drawImage(img, -200, -200, 400, 400);
+        ctx.shadowColor = '#FF0055';
+        ctx.shadowBlur = 35;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // Draw Solid-Light Laser Webs connecting to sky spires
+        ctx.strokeStyle = '#00F0FF';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#00F0FF';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.moveTo(-renderW * 0.32, -renderH * 0.12);
+        ctx.lineTo(-width * 0.45, -height * 0.4);
+        ctx.moveTo(renderW * 0.32, -renderH * 0.12);
+        ctx.lineTo(width * 0.45, -height * 0.4);
+        ctx.stroke();
+
         ctx.restore();
       } else {
         // High-impact Cyberpunk 2099 Skull Spider Mask

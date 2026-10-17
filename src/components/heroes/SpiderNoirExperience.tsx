@@ -97,16 +97,23 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
       ctx.arc(spotX, spotY, spotRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw Spider-Man Noir Hero
+      // Draw Spider-Man Noir Hero (Proportionally scaled to viewport)
       const centerX = width / 2;
-      const centerY = height * 0.45;
-      const scale = 0.9 + scrollProgress * 0.2;
+      const centerY = height * 0.48;
+      const scale = 0.95 + scrollProgress * 0.2;
 
       if (img.complete && img.naturalWidth > 0) {
+        const targetHeight = Math.min(height * 0.72, 580);
+        const ratio = targetHeight / img.naturalHeight;
+        const renderW = img.naturalWidth * ratio;
+        const renderH = targetHeight;
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.drawImage(img, -200, -200, 400, 400);
+        ctx.shadowColor = '#F59E0B';
+        ctx.shadowBlur = 30;
+        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact Chiaroscuro Noir Fedora Mask Silhouette
