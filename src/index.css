@@ -4,99 +4,152 @@
 
 :root {
   color-scheme: dark;
-  /* Default: Spider-Man Theme */
+  /* Default: Spider-Man Earth-616 */
   --hero-hue: 25;
   --hero-accent-hue: 195;
   --hero-primary: #E23636;
   --hero-secondary: #0B3C5D;
   --hero-accent: #00B4D8;
-  --hero-glow: rgba(226, 54, 54, 0.6);
-  --hero-hud-bg: rgba(11, 16, 32, 0.85);
-  --hero-hud-border: rgba(0, 180, 216, 0.35);
+  --hero-glow: rgba(226, 54, 54, 0.65);
+  --hero-hud-bg: rgba(11, 16, 32, 0.9);
+  --hero-hud-border: rgba(0, 180, 216, 0.4);
 }
 
+/* 1. Peter Parker (Earth-616) */
 [data-hero="spiderman"] {
-  --hero-hue: 25;
-  --hero-accent-hue: 195;
   --hero-primary: #E23636;
   --hero-secondary: #0B3C5D;
   --hero-accent: #00B4D8;
-  --hero-glow: rgba(226, 54, 54, 0.6);
-  --hero-hud-bg: rgba(11, 16, 32, 0.85);
-  --hero-hud-border: rgba(0, 180, 216, 0.35);
+  --hero-glow: rgba(226, 54, 54, 0.75);
+  --hero-hud-bg: rgba(11, 16, 32, 0.92);
+  --hero-hud-border: rgba(0, 180, 216, 0.45);
 }
 
-[data-hero="ironman"] {
-  --hero-hue: 45;
-  --hero-accent-hue: 185;
-  --hero-primary: #D4A22F;
-  --hero-secondary: #B91C1C;
-  --hero-accent: #38BDF8;
-  --hero-glow: rgba(212, 162, 47, 0.6);
-  --hero-hud-bg: rgba(18, 14, 24, 0.85);
-  --hero-hud-border: rgba(212, 162, 47, 0.4);
-}
-
-[data-hero="blackwidow"] {
-  --hero-hue: 0;
-  --hero-accent-hue: 35;
-  --hero-primary: #EF4444;
+/* 2. Miles Morales (Earth-1610) */
+[data-hero="miles"] {
+  --hero-primary: #FACC15;
   --hero-secondary: #0F172A;
-  --hero-accent: #F59E0B;
-  --hero-glow: rgba(239, 68, 68, 0.6);
-  --hero-hud-bg: rgba(15, 23, 42, 0.9);
-  --hero-hud-border: rgba(239, 68, 68, 0.4);
+  --hero-accent: #EF4444;
+  --hero-glow: rgba(250, 204, 21, 0.75);
+  --hero-hud-bg: rgba(15, 23, 42, 0.92);
+  --hero-hud-border: rgba(250, 204, 21, 0.45);
 }
 
-[data-hero="captainamerica"] {
-  --hero-hue: 220;
-  --hero-accent-hue: 0;
-  --hero-primary: #3B82F6;
-  --hero-secondary: #DC2626;
-  --hero-accent: #FFFFFF;
-  --hero-glow: rgba(59, 130, 246, 0.6);
-  --hero-hud-bg: rgba(10, 25, 47, 0.88);
-  --hero-hud-border: rgba(59, 130, 246, 0.4);
+/* 3. Spider-Gwen / Ghost-Spider (Earth-65) */
+[data-hero="gwen"] {
+  --hero-primary: #F43F5E;
+  --hero-secondary: #1E1B4B;
+  --hero-accent: #2DD4BF;
+  --hero-glow: rgba(244, 63, 94, 0.75);
+  --hero-hud-bg: rgba(30, 27, 75, 0.92);
+  --hero-hud-border: rgba(45, 212, 191, 0.45);
+}
+
+/* 4. Spider-Man 2099 (Earth-928) */
+[data-hero="spider2099"] {
+  --hero-primary: #FF0055;
+  --hero-secondary: #050B1E;
+  --hero-accent: #00F0FF;
+  --hero-glow: rgba(255, 0, 85, 0.75);
+  --hero-hud-bg: rgba(5, 11, 30, 0.92);
+  --hero-hud-border: rgba(0, 240, 255, 0.45);
+}
+
+/* 5. Spider-Man Noir (Earth-90214) */
+[data-hero="spidernoir"] {
+  --hero-primary: #E4E4E7;
+  --hero-secondary: #09090B;
+  --hero-accent: #F59E0B;
+  --hero-glow: rgba(245, 158, 11, 0.65);
+  --hero-hud-bg: rgba(18, 18, 22, 0.94);
+  --hero-hud-border: rgba(228, 228, 231, 0.35);
+}
+
+/* 6. Venom (Klyntar Apex) */
+[data-hero="venom"] {
+  --hero-primary: #F8FAFC;
+  --hero-secondary: #030305;
+  --hero-accent: #10B981;
+  --hero-glow: rgba(16, 185, 129, 0.75);
+  --hero-hud-bg: rgba(4, 5, 8, 0.95);
+  --hero-hud-border: rgba(16, 185, 129, 0.45);
+}
+
+/* 7. Carnage (Klyntar Psychosis) */
+[data-hero="carnage"] {
+  --hero-primary: #DC2626;
+  --hero-secondary: #050202;
+  --hero-accent: #F97316;
+  --hero-glow: rgba(220, 38, 38, 0.85);
+  --hero-hud-bg: rgba(10, 4, 4, 0.95);
+  --hero-hud-border: rgba(220, 38, 38, 0.5);
+}
+
+/* 8. Spider-Punk (Earth-138) */
+[data-hero="spiderpunk"] {
+  --hero-primary: #EC4899;
+  --hero-secondary: #0F172A;
+  --hero-accent: #EAB308;
+  --hero-glow: rgba(236, 72, 153, 0.75);
+  --hero-hud-bg: rgba(15, 23, 42, 0.92);
+  --hero-hud-border: rgba(234, 179, 8, 0.45);
+}
+
+/* GLOBAL SYMBIOTE SURGE OVERRIDE */
+[data-symbiote="true"] {
+  --hero-primary: #F8FAFC !important;
+  --hero-secondary: #050508 !important;
+  --hero-accent: #A855F7 !important;
+  --hero-glow: rgba(168, 85, 247, 0.85) !important;
+  --hero-hud-bg: rgba(6, 6, 10, 0.96) !important;
+  --hero-hud-border: rgba(168, 85, 247, 0.5) !important;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #08090E;
+  background-color: #07080D;
   color: #FFFFFF;
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   overflow-x: clip;
   transition: background-color 0.4s ease;
 }
 
-/* Comic halftone dot background */
+/* Comic Halftone patterns */
 .comic-halftone {
-  background-image: radial-gradient(rgba(226, 54, 54, 0.15) 1px, transparent 0);
+  background-image: radial-gradient(rgba(226, 54, 54, 0.15) 1.5px, transparent 0);
   background-size: 16px 16px;
 }
 
-.comic-halftone-blue {
-  background-image: radial-gradient(rgba(0, 180, 216, 0.12) 1.5px, transparent 0);
+.comic-halftone-cyan {
+  background-image: radial-gradient(rgba(0, 180, 216, 0.15) 1.5px, transparent 0);
+  background-size: 14px 14px;
+}
+
+.comic-halftone-yellow {
+  background-image: radial-gradient(rgba(250, 204, 21, 0.15) 1.5px, transparent 0);
+  background-size: 14px 14px;
+}
+
+.comic-halftone-pink {
+  background-image: radial-gradient(rgba(244, 63, 94, 0.15) 1.5px, transparent 0);
   background-size: 14px 14px;
 }
 
 .comic-dots-pattern {
-  background-image: radial-gradient(#2a2d3d 1px, transparent 1px);
+  background-image: radial-gradient(#2a2d3d 1.2px, transparent 1.2px);
   background-size: 12px 12px;
 }
 
-/* Speed lines effect */
-.speed-lines {
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 40px,
-    rgba(255, 255, 255, 0.03) 40px,
-    rgba(255, 255, 255, 0.03) 42px
-  );
+/* Web grid background */
+.spider-web-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
-/* Marvel-style comic text glow & drop shadow */
+/* Marvel-style comic title */
 .comic-title {
   font-family: 'Bangers', cursive, sans-serif;
   text-shadow: 
@@ -105,7 +158,7 @@ body {
     1px -1px 0px #000000,
     -1px 1px 0px #000000,
     1px 1px 0px #000000,
-    4px 4px 15px var(--hero-glow);
+    4px 4px 18px var(--hero-glow);
   letter-spacing: 2px;
 }
 
@@ -113,94 +166,86 @@ body {
   filter: drop-shadow(4px 4px 0px #000000);
 }
 
-.glow-spidey-red {
-  filter: drop-shadow(0 0 16px rgba(230, 36, 41, 0.6));
-}
-
-.glow-spidey-blue {
-  filter: drop-shadow(0 0 16px rgba(0, 180, 216, 0.5));
-}
-
 .glow-hero {
   filter: drop-shadow(0 0 18px var(--hero-glow));
 }
 
-/* Sci-Fi Chamfered HUD Panel */
+/* Chamfered Sci-Fi / Spider-Tech HUD Panel */
 .tactical-hud-panel {
   clip-path: polygon(
-    0 12px,
-    12px 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% calc(100% - 12px),
-    calc(100% - 12px) 100%,
-    12px 100%,
-    0 calc(100% - 12px)
+    0 14px,
+    14px 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    14px 100%,
+    0 calc(100% - 14px)
   );
 }
 
-/* Subtle Holographic Scanline Overlay */
-.hud-scanline {
-  background: linear-gradient(
-    rgba(18, 16, 26, 0) 50%,
-    rgba(0, 0, 0, 0.25) 50%
-  ),
-  linear-gradient(
-    90deg,
-    rgba(255, 0, 0, 0.03),
-    rgba(0, 255, 0, 0.01),
-    rgba(0, 0, 255, 0.03)
+/* Anarchic Punk Paper Cut */
+.punk-rip-border {
+  clip-path: polygon(
+    0% 0%, 98% 2%, 100% 98%, 2% 100%, 0% 85%, 2% 70%, 0% 55%, 2% 40%, 0% 25%
   );
-  background-size: 100% 3px, 6px 100%;
 }
 
-/* Custom dynamic hero scrollbar */
+/* Noir Film Grain Simulation */
+.noir-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+/* Symbiote Organic Vignette */
+.symbiote-vignette {
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.95), inset 0 0 50px rgba(168, 85, 247, 0.35);
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #08090E;
+  background: #07080D;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--hero-primary, #E62429);
+  background: var(--hero-primary, #E23636);
   border-radius: 3px;
   transition: background 0.3s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--hero-accent, #F3D403);
+  background: var(--hero-accent, #00B4D8);
 }
 
-/* Spider-Sense Ring Animation */
+/* Keyframes */
 @keyframes sensePulse {
-  0% {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.9;
-  }
-  100% {
-    transform: scale(1.4);
-    opacity: 0;
-  }
+  0% { transform: scale(0.6); opacity: 0; }
+  50% { opacity: 0.95; }
+  100% { transform: scale(1.4); opacity: 0; }
 }
 
 .spider-sense-ring {
   animation: sensePulse 1.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
 }
 
-/* Arc Reactor Pulse Animation */
-@keyframes arcPulse {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.3);
-    opacity: 0.85;
-  }
-  50% {
-    box-shadow: 0 0 35px rgba(56, 189, 248, 0.85), inset 0 0 25px rgba(56, 189, 248, 0.6);
-    opacity: 1;
-  }
+@keyframes glitchAnim {
+  0% { transform: translate(0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(3px, 1px); }
+  80% { transform: translate(1px, -2px); }
+  100% { transform: translate(0); }
 }
 
-.arc-reactor-pulse {
-  animation: arcPulse 2s ease-in-out infinite;
+.glitch-text {
+  animation: glitchAnim 0.35s infinite;
+}
+
+@keyframes symbiotePulse {
+  0%, 100% { filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.5)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 35px rgba(168, 85, 247, 0.95)); transform: scale(1.02); }
+}
+
+.symbiote-pulsing {
+  animation: symbiotePulse 2s ease-in-out infinite;
 }

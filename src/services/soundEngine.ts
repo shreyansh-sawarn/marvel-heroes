@@ -1,10 +1,13 @@
-// Web Audio API Procedural Sound Engine for Marvel Heroes
+// Web Audio API Procedural Sound Engine for Spider-Verse & Symbiote Nexus
+import { SpiderHeroId } from '../types';
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
-  private lastWhooshTime: number = 0;
   private lastThwipTime: number = 0;
-  private lastRepulsorTime: number = 0;
+  private lastVenomTime: number = 0;
+  private lastRoarTime: number = 0;
+  private lastGlitchTime: number = 0;
 
   private initContext() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -31,16 +34,15 @@ class SoundEngine {
     return this.isMuted;
   }
 
-  // "THWIP!" - Snappy web-shooter acoustic release
+  // --- PETER PARKER: CLASSIC WEB-SHOOTER ("THWIP!") ---
   public playWebShoot() {
     if (this.isMuted) return;
     const now = Date.now();
-    if (now - this.lastThwipTime < 250) return; // debounce
+    if (now - this.lastThwipTime < 180) return;
     this.lastThwipTime = now;
 
     this.initContext();
     if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
 
     // High snappy zip
@@ -49,17 +51,17 @@ class SoundEngine {
     const filter = this.ctx.createBiquadFilter();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1400, t);
-    osc.frequency.exponentialRampToValueAtTime(120, t + 0.12);
+    osc.frequency.setValueAtTime(1600, t);
+    osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
 
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(2200, t);
-    filter.Q.setValueAtTime(4, t);
+    filter.frequency.setValueAtTime(2400, t);
+    filter.Q.setValueAtTime(3.5, t);
 
     gain.gain.setValueAtTime(0.35, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
 
-    // Noise burst for the pneumatic piston hiss
+    // Noise burst for pneumatic piston hiss
     const bufferSize = Math.floor(this.ctx.sampleRate * 0.08);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -69,7 +71,7 @@ class SoundEngine {
     const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
     const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.2, t);
+    noiseGain.gain.setValueAtTime(0.22, t);
     noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
 
     osc.connect(filter);
@@ -84,434 +86,538 @@ class SoundEngine {
     noise.start(t);
   }
 
-  // Iron Man Repulsor Blast (High pitch charge + shockwave burst)
-  public playRepulsor() {
-    if (this.isMuted) return;
-    const now = Date.now();
-    if (now - this.lastRepulsorTime < 350) return;
-    this.lastRepulsorTime = now;
-
-    this.initContext();
-    if (!this.ctx) return;
-
-    const t = this.ctx.currentTime;
-
-    // High frequency charge tone
-    const chargeOsc = this.ctx.createOscillator();
-    const chargeGain = this.ctx.createGain();
-    chargeOsc.type = 'sine';
-    chargeOsc.frequency.setValueAtTime(400, t);
-    chargeOsc.frequency.exponentialRampToValueAtTime(2800, t + 0.12);
-
-    chargeGain.gain.setValueAtTime(0.05, t);
-    chargeGain.gain.linearRampToValueAtTime(0.25, t + 0.1);
-    chargeGain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
-
-    chargeOsc.connect(chargeGain);
-    chargeGain.connect(this.ctx.destination);
-
-    chargeOsc.start(t);
-    chargeOsc.stop(t + 0.15);
-
-    // Deep plasma punch explosion
-    const boomOsc = this.ctx.createOscillator();
-    const boomGain = this.ctx.createGain();
-    boomOsc.type = 'triangle';
-    boomOsc.frequency.setValueAtTime(240, t + 0.1);
-    boomOsc.frequency.exponentialRampToValueAtTime(30, t + 0.45);
-
-    boomGain.gain.setValueAtTime(0, t);
-    boomGain.gain.setValueAtTime(0.45, t + 0.1);
-    boomGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-
-    boomOsc.connect(boomGain);
-    boomGain.connect(this.ctx.destination);
-
-    boomOsc.start(t + 0.1);
-    boomOsc.stop(t + 0.52);
-  }
-
-  // Tactical HUD Chirp / Click
-  public playHudClick() {
-    if (this.isMuted) return;
-    this.initContext();
-    if (!this.ctx) return;
-
-    const t = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(2200, t);
-    osc.frequency.setValueAtTime(3300, t + 0.03);
-
-    gain.gain.setValueAtTime(0.12, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.08);
-  }
-
-  // Hero Switch Power Surge
-  public playHeroSwitch() {
-    if (this.isMuted) return;
-    this.initContext();
-    if (!this.ctx) return;
-
-    const t = this.ctx.currentTime;
-    [440, 660, 880, 1320].forEach((freq, i) => {
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, t + i * 0.05);
-      gain.gain.setValueAtTime(0.08, t + i * 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.05 + 0.2);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(t + i * 0.05);
-      osc.stop(t + i * 0.05 + 0.22);
-    });
-  }
-
-  // Spider-Sense Tingle (Eerie harmonic chime)
+  // --- SPIDER-SENSE TINGLE / WARNING ---
   public playSpiderSense() {
     if (this.isMuted) return;
     this.initContext();
     if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
-    const freqs = [880, 1174.66, 1760, 2349.32];
 
-    freqs.forEach((freq, idx) => {
+    const freqs = [880, 1174, 1396, 1760];
+    freqs.forEach((f, idx) => {
       if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, t + idx * 0.04);
-      osc.frequency.linearRampToValueAtTime(freq * 1.05, t + idx * 0.04 + 0.3);
+      osc.frequency.setValueAtTime(f, t + idx * 0.06);
+      osc.frequency.exponentialRampToValueAtTime(f * 1.05, t + idx * 0.06 + 0.3);
 
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.setValueAtTime(0.08, t + idx * 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.04 + 0.4);
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.setValueAtTime(0.12, t + idx * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.06 + 0.45);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
-      osc.start(t + idx * 0.04);
-      osc.stop(t + idx * 0.04 + 0.45);
+      osc.start(t + idx * 0.06);
+      osc.stop(t + idx * 0.06 + 0.5);
     });
   }
 
-  // Wind / Swing Whoosh
-  public playWhoosh(speedMultiplier = 1) {
+  // --- MILES MORALES: VENOM BLAST BIO-ELECTRICITY ---
+  public playVenomBlast(intensity: number = 1.0) {
     if (this.isMuted) return;
     const now = Date.now();
-    if (now - this.lastWhooshTime < 300) return;
-    this.lastWhooshTime = now;
+    if (now - this.lastVenomTime < 150) return;
+    this.lastVenomTime = now;
 
     this.initContext();
     if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
-    const dur = 0.35 / Math.max(0.5, speedMultiplier);
 
-    const bufferSize = Math.floor(this.ctx.sampleRate * dur);
+    // Electric zap / saw oscillators with FM modulation
+    const carrier = this.ctx.createOscillator();
+    const modulator = this.ctx.createOscillator();
+    const modGain = this.ctx.createGain();
+    const mainGain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    carrier.type = 'sawtooth';
+    carrier.frequency.setValueAtTime(180, t);
+    carrier.frequency.exponentialRampToValueAtTime(80, t + 0.28);
+
+    modulator.type = 'square';
+    modulator.frequency.setValueAtTime(45, t);
+    modulator.frequency.linearRampToValueAtTime(15, t + 0.28);
+
+    modGain.gain.setValueAtTime(140 * intensity, t);
+    modulator.connect(modGain);
+    modGain.connect(carrier.frequency);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(4000, t);
+    filter.frequency.exponentialRampToValueAtTime(400, t + 0.28);
+    filter.Q.setValueAtTime(6, t);
+
+    mainGain.gain.setValueAtTime(0.35 * intensity, t);
+    mainGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+
+    carrier.connect(filter);
+    filter.connect(mainGain);
+    mainGain.connect(this.ctx.destination);
+
+    carrier.start(t);
+    modulator.start(t);
+    carrier.stop(t + 0.32);
+    modulator.stop(t + 0.32);
+
+    // Sub rumble impact
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(90, t);
+    subOsc.frequency.exponentialRampToValueAtTime(30, t + 0.35);
+
+    subGain.gain.setValueAtTime(0.4 * intensity, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+    subOsc.start(t);
+    subOsc.stop(t + 0.36);
+  }
+
+  // --- MILES MORALES: CAMOUFLAGE SHIMMER ---
+  public playCamouflage() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, t);
+    osc.frequency.exponentialRampToValueAtTime(1600, t + 0.25);
+    osc.frequency.exponentialRampToValueAtTime(600, t + 0.45);
+
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.5);
+  }
+
+  // --- SPIDER-GWEN: RHYTHM BEATS & SYNTH PAD ---
+  public playGwenBeat(type: 'kick' | 'snare' | 'hihat' | 'synth') {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    if (type === 'kick') {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(38, t + 0.22);
+      gain.gain.setValueAtTime(0.5, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.26);
+    } else if (type === 'snare') {
+      const noise = this.ctx.createBufferSource();
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.15);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(1000, t);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start(t);
+    } else if (type === 'hihat') {
+      const noise = this.ctx.createBufferSource();
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.05);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(6000, t);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start(t);
+    } else {
+      // Ethereal neon synth chord
+      const chords = [523.25, 659.25, 783.99, 1046.5]; // C Major neon chord
+      chords.forEach((note) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(note, t);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, t);
+        filter.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.48);
+      });
+    }
+  }
+
+  // --- SPIDER-MAN 2099: TEMPORAL GLITCH & LASER WEBS ---
+  public play2099Glitch() {
+    if (this.isMuted) return;
+    const now = Date.now();
+    if (now - this.lastGlitchTime < 180) return;
+    this.lastGlitchTime = now;
+
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(2200, t);
+    osc.frequency.setValueAtTime(450, t + 0.04);
+    osc.frequency.setValueAtTime(3200, t + 0.08);
+    osc.frequency.setValueAtTime(120, t + 0.12);
+
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  }
+
+  // --- SPIDER-MAN NOIR: TYPEWRITER & MATCH STRIKE ---
+  public playNoirTypewriter() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1200 + Math.random() * 400, t);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.05);
+  }
+
+  public playNoirMatchStrike() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const noise = this.ctx.createBufferSource();
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
     }
-
-    const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(300, t);
-    filter.frequency.exponentialRampToValueAtTime(1400, t + dur * 0.5);
-    filter.frequency.exponentialRampToValueAtTime(200, t + dur);
-    filter.Q.setValueAtTime(2, t);
+    filter.frequency.setValueAtTime(1800, t);
+    filter.Q.setValueAtTime(2.5, t);
 
     const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0.01, t);
-    gain.gain.linearRampToValueAtTime(0.18, t + dur * 0.4);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
 
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
-
     noise.start(t);
-    noise.stop(t + dur + 0.05);
   }
 
-  // Wall Impact / Hero Landing
-  public playImpact() {
+  // --- VENOM & CARNAGE: VISCERAL SYMBIOTE TENDRIL & ROAR ---
+  public playSymbioteTendril() {
     if (this.isMuted) return;
     this.initContext();
     if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
+
+    // Organic squelch whip
     const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(160, t);
-    osc.frequency.exponentialRampToValueAtTime(35, t + 0.3);
-
-    gain.gain.setValueAtTime(0.4, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.4);
-  }
-
-  // Arc Reactor High-Voltage Charge
-  public playArcReactorCharge() {
-    if (this.isMuted) return;
-    this.initContext();
-    if (!this.ctx) return;
-
-    const t = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
 
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(150, t);
-    osc.frequency.exponentialRampToValueAtTime(1800, t + 1.2);
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.2);
 
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(300, t);
-    filter.frequency.exponentialRampToValueAtTime(4500, t + 1.2);
-    filter.Q.setValueAtTime(8, t);
+    filter.frequency.setValueAtTime(1500, t);
+    filter.frequency.linearRampToValueAtTime(300, t + 0.2);
+    filter.Q.setValueAtTime(7, t);
 
-    gain.gain.setValueAtTime(0.01, t);
-    gain.gain.linearRampToValueAtTime(0.35, t + 1.0);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.35);
+    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.ctx.destination);
-
     osc.start(t);
-    osc.stop(t + 1.4);
-
-    // Resonant pulse chime at peak
-    setTimeout(() => {
-      if (this.isMuted || !this.ctx) return;
-      const peakT = this.ctx.currentTime;
-      const peakOsc = this.ctx.createOscillator();
-      const peakGain = this.ctx.createGain();
-      peakOsc.type = 'sine';
-      peakOsc.frequency.setValueAtTime(1200, peakT);
-      peakGain.gain.setValueAtTime(0.3, peakT);
-      peakGain.gain.exponentialRampToValueAtTime(0.001, peakT + 0.6);
-      peakOsc.connect(peakGain);
-      peakGain.connect(this.ctx.destination);
-      peakOsc.start(peakT);
-      peakOsc.stop(peakT + 0.65);
-    }, 1100);
+    osc.stop(t + 0.25);
   }
 
-  // Tactical JARVIS Audio / Voice Telemetry
-  public playJarvisVoice(phrase: string) {
+  public playSymbioteRoar() {
     if (this.isMuted) return;
-    this.playHudClick();
+    const now = Date.now();
+    if (now - this.lastRoarTime < 600) return;
+    this.lastRoarTime = now;
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(phrase);
-      utterance.rate = 1.08;
-      utterance.pitch = 0.95;
-      utterance.volume = 0.85;
-
-      const voices = window.speechSynthesis.getVoices();
-      const ukVoice = voices.find(v => v.lang.includes('en-GB') || v.name.includes('UK') || v.name.includes('Oliver') || v.name.includes('George'));
-      if (ukVoice) utterance.voice = ukVoice;
-
-      window.speechSynthesis.speak(utterance);
-    }
-  }
-
-  // Enhanced Hero Switch Audio
-  public playHeroSwitchDetailed(hero: 'ironman' | 'spiderman' | 'captainamerica') {
-    if (this.isMuted) return;
     this.initContext();
     if (!this.ctx) return;
-
-    if (hero === 'ironman') {
-      // Iron Man: Heavy mechanical clamp + repulsor flare
-      this.playImpact();
-      setTimeout(() => this.playRepulsor(), 140);
-    } else if (hero === 'captainamerica') {
-      // Captain America: Kinetic shield whoosh + resonant vibranium clang
-      this.playShieldThrow();
-      setTimeout(() => this.playShieldClang(), 180);
-    } else {
-      // Spider-Man: Rapid double web thwip + spider-sense chime
-      this.playWebShoot();
-      setTimeout(() => this.playWebShoot(), 160);
-      setTimeout(() => this.playSpiderSense(), 260);
-    }
-  }
-
-  // Captain America: Whistling kinetic shield throw whoosh
-  public playShieldThrow() {
-    if (this.isMuted) return;
-    this.initContext();
-    if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
 
-    // Air displacement white noise / flutter
-    const bufferSize = Math.floor(this.ctx.sampleRate * 0.45);
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
+    // Deep sub-bass growl
+    const sub = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    sub.type = 'sawtooth';
+    sub.frequency.setValueAtTime(65, t);
+    sub.frequency.linearRampToValueAtTime(45, t + 0.4);
+    sub.frequency.linearRampToValueAtTime(30, t + 0.7);
 
-    const whiteNoise = this.ctx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
+    subGain.gain.setValueAtTime(0.45, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.75);
 
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(450, t);
-    filter.frequency.exponentialRampToValueAtTime(1600, t + 0.18);
-    filter.frequency.exponentialRampToValueAtTime(320, t + 0.42);
-    filter.Q.setValueAtTime(3.5, t);
+    // Raspy distortion noise
+    const noise = this.ctx.createBufferSource();
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.6);
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    noise.buffer = buffer;
+
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(450, t);
+    noiseFilter.Q.setValueAtTime(4, t);
 
     const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.01, t);
-    noiseGain.gain.linearRampToValueAtTime(0.35, t + 0.12);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.44);
+    noiseGain.gain.setValueAtTime(0.3, t);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
 
-    whiteNoise.connect(filter);
-    filter.connect(noiseGain);
+    sub.connect(subGain);
+    subGain.connect(this.ctx.destination);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
     noiseGain.connect(this.ctx.destination);
 
-    whiteNoise.start(t);
-    whiteNoise.stop(t + 0.45);
-
-    // Whistling spinning harmonic pitch
-    const osc = this.ctx.createOscillator();
-    const oscGain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(650, t);
-    osc.frequency.exponentialRampToValueAtTime(1100, t + 0.15);
-    osc.frequency.exponentialRampToValueAtTime(480, t + 0.4);
-
-    oscGain.gain.setValueAtTime(0.01, t);
-    oscGain.gain.linearRampToValueAtTime(0.18, t + 0.12);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
-
-    osc.connect(oscGain);
-    oscGain.connect(this.ctx.destination);
-
-    osc.start(t);
-    osc.stop(t + 0.43);
+    sub.start(t);
+    noise.start(t);
+    sub.stop(t + 0.8);
   }
 
-  // Captain America: Resonant Vibranium Alloy Metallic Clang
-  public playShieldClang() {
+  // --- SONIC FREQUENCY (SYMBIOTE WEAKNESS) ---
+  public playSonicScreech(freq: number = 880) {
     if (this.isMuted) return;
     this.initContext();
     if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
 
-    // Primary metallic impact strike
-    const frequencies = [820, 1640, 2460, 4200];
-    frequencies.forEach((freq, idx) => {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.38);
+  }
+
+  // --- SPIDER-PUNK: OVERDRIVEN GUITAR DISTORTION ---
+  public playPunkDistortion() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // Power chord (E, B, E)
+    const chord = [82.41, 123.47, 164.81];
+    chord.forEach((freq) => {
       if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const dist = this.ctx.createWaveShaper();
 
-      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+      // Simple soft distortion curve
+      const n_samples = 44100;
+      const curve = new Float32Array(n_samples);
+      const deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i) {
+        const x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + 20) * x * 20 * deg) / (Math.PI + 20 * Math.abs(x));
+      }
+      dist.curve = curve;
+
+      osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, t);
-      // Subtle pitch bend downward on impact
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.96, t + 0.04);
 
-      const decayTime = 0.5 + idx * 0.2;
-      const volume = 0.3 / (idx + 1);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
 
-      gain.gain.setValueAtTime(volume, t);
-      gain.gain.exponentialRampToValueAtTime(0.0005, t + decayTime);
-
-      osc.connect(gain);
+      osc.connect(dist);
+      dist.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(t);
-      osc.stop(t + decayTime + 0.05);
+      osc.stop(t + 0.5);
     });
-
-    // Sub-bass kinetic thud
-    const subOsc = this.ctx.createOscillator();
-    const subGain = this.ctx.createGain();
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(160, t);
-    subOsc.frequency.exponentialRampToValueAtTime(40, t + 0.18);
-
-    subGain.gain.setValueAtTime(0.4, t);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-
-    subOsc.connect(subGain);
-    subGain.connect(this.ctx.destination);
-
-    subOsc.start(t);
-    subOsc.stop(t + 0.23);
   }
 
-  // Web-Shooter Ballistic Firing Modes
-  public playWebBallistic(mode: 'strand' | 'grenade' | 'ricochet') {
+  // --- MULTIVERSE DIMENSIONAL WARP ---
+  public playDimensionalWarp() {
     if (this.isMuted) return;
     this.initContext();
     if (!this.ctx) return;
-
     const t = this.ctx.currentTime;
 
-    if (mode === 'strand') {
-      this.playWebShoot();
-    } else if (mode === 'grenade') {
-      // Heavy pneumatic pop + dense splatter
-      this.playWebShoot();
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(320, t + 0.05);
-      osc.frequency.exponentialRampToValueAtTime(45, t + 0.3);
-      gain.gain.setValueAtTime(0.4, t + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(t + 0.05);
-      osc.stop(t + 0.36);
-    } else if (mode === 'ricochet') {
-      // Triple bounce deflection
-      [0, 0.09, 0.18].forEach((delay, idx) => {
-        if (!this.ctx) return;
-        const pingT = t + delay;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1800 + idx * 400, pingT);
-        gain.gain.setValueAtTime(0.2, pingT);
-        gain.gain.exponentialRampToValueAtTime(0.001, pingT + 0.08);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(pingT);
-        osc.stop(pingT + 0.09);
-      });
-    }
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(100, t);
+    osc.frequency.exponentialRampToValueAtTime(1800, t + 0.3);
+    osc.frequency.exponentialRampToValueAtTime(120, t + 0.55);
+
+    gain.gain.setValueAtTime(0.01, t);
+    gain.gain.linearRampToValueAtTime(0.3, t + 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.6);
+  }
+
+  // --- HERO SWITCH SIGNATURE CUES ---
+  public playHeroSwitchDetailed(heroId: SpiderHeroId, isSymbiote: boolean = false) {
+    if (this.isMuted) return;
+    this.playDimensionalWarp();
+
+    setTimeout(() => {
+      if (isSymbiote || heroId === 'venom' || heroId === 'carnage') {
+        this.playSymbioteRoar();
+      } else {
+        switch (heroId) {
+          case 'spiderman':
+            this.playWebShoot();
+            setTimeout(() => this.playSpiderSense(), 100);
+            break;
+          case 'miles':
+            this.playVenomBlast(0.9);
+            break;
+          case 'gwen':
+            this.playGwenBeat('synth');
+            break;
+          case 'spider2099':
+            this.play2099Glitch();
+            break;
+          case 'spidernoir':
+            this.playNoirMatchStrike();
+            break;
+          case 'spiderpunk':
+            this.playPunkDistortion();
+            break;
+        }
+      }
+    }, 280);
+  }
+
+  public playWhoosh() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, t);
+    osc.frequency.exponentialRampToValueAtTime(450, t + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(60, t + 0.35);
+    gain.gain.setValueAtTime(0.01, t);
+    gain.gain.linearRampToValueAtTime(0.25, t + 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.36);
+  }
+
+  public playImpact() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(30, t + 0.2);
+    gain.gain.setValueAtTime(0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.23);
+  }
+
+  public playHudClick() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(950, t);
+    osc.frequency.exponentialRampToValueAtTime(400, t + 0.05);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.06);
   }
 }
 

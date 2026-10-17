@@ -1,13 +1,16 @@
 import React, { useEffect, useRef } from 'react';
+import { SpiderHeroId } from '../../types';
 
 interface BackgroundParticlesProps {
   intensity?: number;
-  activeHero?: 'spiderman' | 'ironman' | 'captainamerica';
+  activeHero?: SpiderHeroId;
+  isSymbioteSurge?: boolean;
 }
 
 export const BackgroundParticles: React.FC<BackgroundParticlesProps> = ({
   intensity = 1,
   activeHero = 'spiderman',
+  isSymbioteSurge = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -30,18 +33,32 @@ export const BackgroundParticles: React.FC<BackgroundParticlesProps> = ({
 
     window.addEventListener('resize', handleResize);
 
-    const isIronMan = activeHero === 'ironman';
-    const isCap = activeHero === 'captainamerica';
-    const particleCount = Math.floor(40 * intensity);
+    const particleCount = Math.floor(45 * intensity);
 
     const getHeroColors = () => {
-      if (isIronMan) {
-        return ['#D4A22F', '#F59E0B', '#38BDF8', '#EF4444', '#FCD34D'];
+      if (isSymbioteSurge || activeHero === 'venom') {
+        return ['#A855F7', '#C084FC', '#000000', '#10B981', '#F8FAFC'];
       }
-      if (isCap) {
-        return ['#3B82F6', '#60A5FA', '#E23636', '#FFFFFF', '#93C5FD'];
+      if (activeHero === 'carnage') {
+        return ['#DC2626', '#EF4444', '#7F1D1D', '#F97316', '#000000'];
       }
-      return ['#E23636', '#00B4D8', '#F3D403', '#FFFFFF', '#EF4444'];
+      if (activeHero === 'miles') {
+        return ['#FACC15', '#EF4444', '#06B6D4', '#FFFFFF'];
+      }
+      if (activeHero === 'gwen') {
+        return ['#F43F5E', '#2DD4BF', '#FFFFFF', '#C084FC'];
+      }
+      if (activeHero === 'spider2099') {
+        return ['#FF0055', '#00F0FF', '#FF6B00', '#FFFFFF'];
+      }
+      if (activeHero === 'spidernoir') {
+        return ['#E4E4E7', '#F59E0B', '#71717A', '#FFFFFF'];
+      }
+      if (activeHero === 'spiderpunk') {
+        return ['#EC4899', '#EAB308', '#38BDF8', '#FFFFFF'];
+      }
+      // Peter Parker (spiderman)
+      return ['#E23636', '#00B4D8', '#F3D403', '#FFFFFF'];
     };
 
     const colors = getHeroColors();
@@ -49,23 +66,19 @@ export const BackgroundParticles: React.FC<BackgroundParticlesProps> = ({
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      size: Math.random() * (isIronMan ? 3.0 : isCap ? 2.8 : 2.5) + 0.8,
+      size: Math.random() * 2.6 + 0.8,
       speedX: (Math.random() - 0.5) * 0.8,
-      speedY: isIronMan
-        ? -Math.random() * 1.8 - 0.5 // faster rising heat embers
-        : isCap
-        ? -Math.random() * 1.0 - 0.2 // tactical drift
-        : -Math.random() * 1.2 - 0.3,
+      speedY: -Math.random() * 1.2 - 0.3,
       alpha: Math.random() * 0.7 + 0.25,
       color: colors[Math.floor(Math.random() * colors.length)],
       pulse: Math.random() * Math.PI * 2,
     }));
 
     let lastTime = 0;
-    const fpsInterval = 1000 / 30; // 30 FPS is plenty for background embers
+    const fpsInterval = 1000 / 30;
 
     const render = (time: number) => {
-      if (document.hidden) return; // Completely stop rAF while hidden
+      if (document.hidden) return;
 
       animationFrameId = requestAnimationFrame(render);
 
@@ -94,14 +107,6 @@ export const BackgroundParticles: React.FC<BackgroundParticlesProps> = ({
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
-
-        // Extra subtle glow halo for embers
-        if (isIronMan && p.size > 2) {
-          ctx.globalAlpha = currentAlpha * 0.3;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
       });
     };
 
@@ -121,12 +126,12 @@ export const BackgroundParticles: React.FC<BackgroundParticlesProps> = ({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [intensity, activeHero]);
+  }, [intensity, activeHero, isSymbioteSurge]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none z-15"
+      className="fixed inset-0 w-full h-full pointer-events-none z-10"
     />
   );
 };
