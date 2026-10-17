@@ -44,3 +44,6 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 [Dd]esktop.ini
+
+# Test screenshots
+screenshots/

@@ -43,6 +43,7 @@ export const SpiderUniverseHero: React.FC<SpiderUniverseHeroProps> = ({
     perch?: HTMLImageElement;
     leap?: HTMLImageElement;
     swing?: HTMLImageElement;
+    symbiote?: HTMLImageElement;
   }>({});
 
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
@@ -71,6 +72,7 @@ export const SpiderUniverseHero: React.FC<SpiderUniverseHeroProps> = ({
       { key: 'perch', src: '/assets/spidey_crouch_raw.jpg' },
       { key: 'leap', src: '/assets/spidey_leap_raw.jpg' },
       { key: 'swing', src: '/assets/spidey_swing_raw.jpg' },
+      { key: 'symbiote', src: '/assets/symbiote_black_hero.png' },
     ];
 
     let loaded = 0;
@@ -200,8 +202,27 @@ export const SpiderUniverseHero: React.FC<SpiderUniverseHeroProps> = ({
         ctx.restore();
       };
 
-      if (imgA) drawImageCover(imgA, camScale, camPanX, camPanY, 1.0);
-      if (imgB && blend > 0.01) drawImageCover(imgB, camScale, camPanX, camPanY, blend);
+      if (isSymbioteSurge && imagesRef.current.symbiote && imagesRef.current.symbiote.complete) {
+        // Draw dramatic darkened background
+        ctx.fillStyle = '#06040A';
+        ctx.fillRect(0, 0, w, h);
+
+        const symImg = imagesRef.current.symbiote;
+        const symScale = (h * 0.85) / symImg.naturalHeight;
+        const sW = symImg.naturalWidth * symScale;
+        const sH = symImg.naturalHeight * symScale;
+
+        ctx.save();
+        ctx.translate(w / 2 + gyroPanX, h * 0.5 + gyroPanY);
+        ctx.rotate(gyroRot * 0.5);
+        ctx.shadowColor = '#A855F7';
+        ctx.shadowBlur = 40 * dpr;
+        ctx.drawImage(symImg, -sW / 2, -sH / 2, sW, sH);
+        ctx.restore();
+      } else {
+        if (imgA) drawImageCover(imgA, camScale, camPanX, camPanY, 1.0);
+        if (imgB && blend > 0.01) drawImageCover(imgB, camScale, camPanX, camPanY, blend);
+      }
 
       // Spider-Sense Radial Warning Waves
       if (spiderSenseActive) {

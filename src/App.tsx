@@ -9,22 +9,23 @@ import { SpiderNavbar } from './components/ui/SpiderNavbar';
 import { MultiverseSelectorModal } from './components/ui/MultiverseSelectorModal';
 import { HeroTransitionCurtain } from './components/ui/HeroTransitionCurtain';
 import { BackgroundParticles } from './components/ui/BackgroundParticles';
-import { SpiderUniverseHero } from './components/spiderman/SpiderUniverseHero';
 import { SpiderSuitDiagnostics } from './components/spiderman/SpiderSuitDiagnostics';
 import { MultiverseMap } from './components/spiderman/MultiverseMap';
-import { LivingSymbioteCanvas } from './components/spiderman/LivingSymbioteCanvas';
-import { WebShooterPhysicsPlayground } from './components/spiderman/WebShooterPhysicsPlayground';
-import { VenomBlastShockwave } from './components/spiderman/VenomBlastShockwave';
-import { SpiderGwenRhythmStage } from './components/spiderman/SpiderGwenRhythmStage';
-import { Spider2099GlitchNexus } from './components/spiderman/Spider2099GlitchNexus';
-import { SpiderNoirDetectiveOffice } from './components/spiderman/SpiderNoirDetectiveOffice';
-import { SpiderPunkAnarchyStage } from './components/spiderman/SpiderPunkAnarchyStage';
+
+// Dedicated Hero Experiences
+import { PeterParkerExperience } from './components/heroes/PeterParkerExperience';
+import { MilesMoralesExperience } from './components/heroes/MilesMoralesExperience';
+import { SpiderGwenExperience } from './components/heroes/SpiderGwenExperience';
+import { Spider2099Experience } from './components/heroes/Spider2099Experience';
+import { SpiderNoirExperience } from './components/heroes/SpiderNoirExperience';
+import { VenomSymbioteExperience } from './components/heroes/VenomSymbioteExperience';
+import { CarnageExperience } from './components/heroes/CarnageExperience';
+import { SpiderPunkExperience } from './components/heroes/SpiderPunkExperience';
 
 import {
   ArrowUp,
   Globe,
   CheckCircle2,
-  Layers,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -132,57 +133,71 @@ export const App: React.FC = () => {
 
       {/* MAIN SPIDER-VERSE SCROLLYTELLING JOURNEY */}
       <main key={`${activeHeroId}-${isSymbioteSurge}`}>
-        {/* CHAPTER 1: The Dimensional Scrollytelling Experience (3D Gyro Canvas + Telemetry) */}
-        <SpiderUniverseHero
-          hero={activeHero}
-          isSymbioteSurge={isSymbioteSurge}
-          onOpenSelector={() => setIsMultiverseModalOpen(true)}
-          onToggleSymbiote={handleToggleSymbioteSurge}
-        />
-
-        {/* CHAPTER 2: Interactive Character Signature Toys & Laboratories */}
-        <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center space-x-2 bg-white/5 border border-white/10 text-hero-primary font-mono text-xs px-3.5 py-1.5 rounded-full mb-2">
-                <Layers className="w-3.5 h-3.5" />
-                <span>INTERACTIVE HERO LABORATORY // CHAPTER 02</span>
-              </div>
-              <h2 className="font-comic text-4xl sm:text-5xl text-white tracking-wide">
-                {isSymbioteSurge
-                  ? 'KLYNTAR LIVING TENDRIL PHYSICS'
-                  : `${activeHero.alias.toUpperCase()} SIGNATURE MECHANIC`}
-              </h2>
-            </div>
-
-            <div className="hidden sm:flex items-center space-x-2 text-xs font-mono text-zinc-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>LIVE INTERACTIVE SIMULATION</span>
-            </div>
-          </div>
-
-          {/* Render Active Character's Toy (or Symbiote Canvas if Infested) */}
-          {isSymbioteSurge || activeHeroId === 'venom' || activeHeroId === 'carnage' ? (
-            <LivingSymbioteCanvas
-              isSymbioteSurge={isSymbioteSurge}
-              onToggleSurge={handleToggleSymbioteSurge}
-            />
-          ) : activeHeroId === 'spiderman' ? (
-            <WebShooterPhysicsPlayground />
-          ) : activeHeroId === 'miles' ? (
-            <VenomBlastShockwave />
-          ) : activeHeroId === 'gwen' ? (
-            <SpiderGwenRhythmStage />
-          ) : activeHeroId === 'spider2099' ? (
-            <Spider2099GlitchNexus />
-          ) : activeHeroId === 'spidernoir' ? (
-            <SpiderNoirDetectiveOffice />
-          ) : activeHeroId === 'spiderpunk' ? (
-            <SpiderPunkAnarchyStage />
-          ) : (
-            <WebShooterPhysicsPlayground />
-          )}
-        </section>
+        {/* DEDICATED BESPOKE CHARACTER EXPERIENCE (SCROLLYTELLING + INTERACTIVE LAB) */}
+        {activeHeroId === 'spiderman' ? (
+          <PeterParkerExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'miles' ? (
+          <MilesMoralesExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'gwen' ? (
+          <SpiderGwenExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'spider2099' ? (
+          <Spider2099Experience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'spidernoir' ? (
+          <SpiderNoirExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'venom' ? (
+          <VenomSymbioteExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'carnage' ? (
+          <CarnageExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : activeHeroId === 'spiderpunk' ? (
+          <SpiderPunkExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        ) : (
+          <PeterParkerExperience
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onOpenSelector={() => setIsMultiverseModalOpen(true)}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+          />
+        )}
 
         {/* CHAPTER 3: Biometric & Technical Suit Diagnostics */}
         <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">

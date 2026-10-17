@@ -100,6 +100,7 @@ export const MultiverseSelectorModal: React.FC<MultiverseSelectorModalProps> = (
               return (
                 <div
                   key={hero.id}
+                  data-hero-card={hero.id}
                   onMouseEnter={() => {
                     setHoveredHero(hero);
                   }}

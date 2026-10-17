@@ -130,6 +130,7 @@ export const SpiderNavbar: React.FC<SpiderNavbarProps> = ({
 
             {/* MULTIVERSE WARP MODAL TRIGGER */}
             <button
+              data-action="open-warp-modal"
               onClick={() => {
                 soundEngine.playHudClick();
                 onOpenMultiverseModal();
