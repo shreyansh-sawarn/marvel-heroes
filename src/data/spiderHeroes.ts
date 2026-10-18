@@ -24,7 +24,7 @@ export const SPIDER_HEROES: Record<SpiderHeroId, SpiderHeroMeta> = {
     suits: ['Classic Red & Blue', 'Iron Spider Armor', 'Advanced Parker Suit', 'Stealth "Big Time" Suit'],
     weapons: ['Dual Mechanical Web-Shooters', 'Spider-Tracers', 'Impact Webbing', 'Spider-Bots'],
     archNemesis: ['Green Goblin (Norman Osborn)', 'Doctor Octopus', 'Kraven the Hunter', 'Kingpin'],
-    signatureMechanic: 'Web-Shooter Ballistics & Spider-Sense Pulse Radar',
+    signatureMechanic: 'Spider-Sense Pulse Radar & Acrobatic Scrollytelling',
     symbioteVariantName: 'Symbiote Black Suit Spider-Man',
     symbioteDescription: 'The alien symbiote enhances Peter\'s physical strength by 300% and generates limitless organic webbing, but feeds on raw aggression and psychological malice.',
   },

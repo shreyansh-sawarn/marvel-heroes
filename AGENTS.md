@@ -50,7 +50,6 @@ Always utilize semantic tokens (`text-hero-primary`, `border-hero-accent`, `glow
 * `src/components/spiderman/`:
   - `SpiderUniverseHero.tsx`: Flagship scrollytelling canvas with 3D tilt.
   - `LivingSymbioteCanvas.tsx`: Interactive living alien symbiote fluid & tendril physics simulator.
-  - `WebShooterPhysicsPlayground.tsx`: Elastic web-line tension & ballistics simulator.
   - `VenomBlastShockwave.tsx`: Miles Morales bio-electric capacitor & camouflage.
   - `SpiderGwenRhythmStage.tsx`: Drum-line beat pads and audio shockwaves.
   - `Spider2099GlitchNexus.tsx`: Alchemax temporal anomaly stabilizer.

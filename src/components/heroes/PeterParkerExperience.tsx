@@ -1,7 +1,6 @@
 import React from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { SpiderUniverseHero } from '../spiderman/SpiderUniverseHero';
-import { WebShooterPhysicsPlayground } from '../spiderman/WebShooterPhysicsPlayground';
 import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 
 interface PeterParkerProps {
@@ -27,17 +26,15 @@ export const PeterParkerExperience: React.FC<PeterParkerProps> = ({
         onToggleSymbiote={onToggleSymbiote}
       />
 
-      {/* 2. INTERACTIVE TOY: WEB-SHOOTER LAB OR LIVING SYMBIOTE IF INFESTED */}
-      <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
-        {isSymbioteSurge ? (
+      {/* 2. LIVING SYMBIOTE LAB (Active during Symbiote Infestation Surge) */}
+      {isSymbioteSurge && (
+        <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
           <LivingSymbioteCanvas
             isSymbioteSurge={isSymbioteSurge}
             onToggleSurge={onToggleSymbiote}
           />
-        ) : (
-          <WebShooterPhysicsPlayground />
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 };
