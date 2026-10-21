@@ -11,6 +11,9 @@ import { HeroTransitionCurtain } from './components/ui/HeroTransitionCurtain';
 import { BackgroundParticles } from './components/ui/BackgroundParticles';
 import { SpiderSuitDiagnostics } from './components/spiderman/SpiderSuitDiagnostics';
 import { MultiverseMap } from './components/spiderman/MultiverseMap';
+import { MultiverseCrisisArena } from './components/spiderman/MultiverseCrisisArena';
+import { CanonEventTerminal } from './components/spiderman/CanonEventTerminal';
+import { MultiverseActionDeck } from './components/ui/MultiverseActionDeck';
 
 // Dedicated Hero Experiences
 import { PeterParkerExperience } from './components/heroes/PeterParkerExperience';
@@ -199,12 +202,29 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* CHAPTER 3: Biometric & Technical Suit Diagnostics */}
+        {/* CHAPTER 2: CANON EVENT COLLISION & MULTIVERSE CRISIS ARENA */}
+        <section id="crisis-arena-section" className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <MultiverseCrisisArena
+            playerHero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onSelectHero={handleHeroSelect}
+          />
+        </section>
+
+        {/* CHAPTER 3: SPIDER-SOCIETY CANON EVENT TIMELINE TERMINAL */}
+        <section id="canon-terminal-section" className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <CanonEventTerminal
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+          />
+        </section>
+
+        {/* CHAPTER 4: Biometric & Technical Suit Diagnostics */}
         <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
           <SpiderSuitDiagnostics hero={activeHero} isSymbioteSurge={isSymbioteSurge} />
         </section>
 
-        {/* CHAPTER 4: The Web of Life & Destiny (Multiverse Cosmic Map) */}
+        {/* CHAPTER 5: The Web of Life & Destiny (Multiverse Cosmic Map) */}
         <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
           <MultiverseMap
             currentHeroId={activeHeroId}
@@ -213,7 +233,7 @@ export const App: React.FC = () => {
           />
         </section>
 
-        {/* CHAPTER 5: Multiverse Spider-Roster Console Grid */}
+        {/* CHAPTER 6: Multiverse Spider-Roster Console Grid */}
         <section className="relative z-30 py-24 px-6 md:px-12 bg-[#060810] border-t border-white/10">
           <div className="max-w-7xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-16">
@@ -318,6 +338,15 @@ export const App: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Multiverse Action Deck: Procedural OST Visualizer + Web-Slinger Dock */}
+      <MultiverseActionDeck
+        activeHero={activeHero}
+        isSymbioteSurge={isSymbioteSurge}
+        onSelectHero={handleHeroSelect}
+        onToggleSymbiote={handleToggleSymbioteSurge}
+        onOpenMultiverseModal={() => setIsMultiverseModalOpen(true)}
+      />
 
       {/* Multiverse Reality Selector Modal */}
       <MultiverseSelectorModal

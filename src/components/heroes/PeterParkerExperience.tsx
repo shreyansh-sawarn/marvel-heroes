@@ -1,6 +1,7 @@
 import React from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { SpiderUniverseHero } from '../spiderman/SpiderUniverseHero';
+import { PeterParkerTechLab } from '../spiderman/PeterParkerTechLab';
 import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 
 interface PeterParkerProps {
@@ -26,9 +27,17 @@ export const PeterParkerExperience: React.FC<PeterParkerProps> = ({
         onToggleSymbiote={onToggleSymbiote}
       />
 
-      {/* 2. LIVING SYMBIOTE LAB (Active during Symbiote Infestation Surge) */}
+      {/* 2. PETER PARKER BIO-TECH BENCH & DAILY BUGLE DARKROOM */}
+      <section id="tech-lab-section" className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+        <PeterParkerTechLab
+          hero={hero}
+          isSymbioteSurge={isSymbioteSurge}
+        />
+      </section>
+
+      {/* 3. LIVING SYMBIOTE LAB (Active during Symbiote Infestation Surge) */}
       {isSymbioteSurge && (
-        <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
+        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
           <LivingSymbioteCanvas
             isSymbioteSurge={isSymbioteSurge}
             onToggleSurge={onToggleSymbiote}
