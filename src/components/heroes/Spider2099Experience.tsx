@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { soundEngine } from '../../services/soundEngine';
 import { Spider2099GlitchNexus } from '../spiderman/Spider2099GlitchNexus';
+import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 import {
   Zap,
   Globe,
@@ -72,13 +73,13 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
         ctx.restore();
       }
 
-      // Cyberpunk 3D Holographic Perspective Floor & Ceiling
+      // Cyberpunk / Klyntar 3D Perspective Floor & Ceiling
       ctx.save();
       const horizonY = height * 0.55;
       const fov = 350;
 
-      // Vertical perspective lines
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+      // Vertical perspective lines (infected with purple symbiote when surge)
+      ctx.strokeStyle = isSymbioteSurge ? 'rgba(168, 85, 247, 0.35)' : 'rgba(0, 240, 255, 0.25)';
       ctx.lineWidth = 1;
       for (let x = -width; x < width * 2; x += 60) {
         ctx.beginPath();
@@ -98,7 +99,9 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
         const screenY = horizonY + (lineZ / fov) * (height - horizonY);
         const topY = horizonY - (lineZ / fov) * horizonY;
 
-        ctx.strokeStyle = `rgba(255, 0, 85, ${0.45 * (lineZ / fov)})`;
+        ctx.strokeStyle = isSymbioteSurge
+          ? `rgba(220, 38, 38, ${0.5 * (lineZ / fov)})`
+          : `rgba(255, 0, 85, ${0.45 * (lineZ / fov)})`;
         ctx.beginPath();
         ctx.moveTo(0, screenY);
         ctx.lineTo(width, screenY);
@@ -116,6 +119,35 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
       const centerY = height * 0.48;
       const scale = 0.95 + scrollProgress * 0.25;
 
+      // Draw Living Bio-Mechanical Tendrils / Wings for Symbiote 2099
+      if (isSymbioteSurge) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const tendrilCount = 8;
+        for (let t = 0; t < tendrilCount; t++) {
+          const side = t % 2 === 0 ? 1 : -1;
+          const angle = (side * Math.PI * 0.3) + Math.sin(gridOffset * 0.1 + t) * 0.25;
+          const len = 140 + Math.sin(gridOffset * 0.15 + t) * 35;
+          ctx.beginPath();
+          ctx.moveTo(0, -20);
+          const cpx = Math.cos(angle) * (len * 0.6) * side;
+          const cpy = Math.sin(angle) * (len * 0.6);
+          const endX = Math.cos(angle) * len * side;
+          const endY = Math.sin(angle) * len;
+          ctx.quadraticCurveTo(cpx, cpy, endX, endY);
+          ctx.strokeStyle = '#A855F7';
+          ctx.lineWidth = 4;
+          ctx.shadowColor = '#FF0055';
+          ctx.shadowBlur = 20;
+          ctx.stroke();
+
+          ctx.strokeStyle = '#050B1E';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       if (img.complete && img.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.72, 600);
         const ratio = targetHeight / img.naturalHeight;
@@ -125,14 +157,23 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.shadowColor = '#FF0055';
-        ctx.shadowBlur = 35;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#FF0055';
+        ctx.shadowBlur = isSymbioteSurge ? 55 : 35;
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
 
-        // Draw Solid-Light Laser Webs connecting to sky spires
-        ctx.strokeStyle = '#00F0FF';
+        // Symbiote 2099 Alien Glitch Overlay
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.3)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
+        // Draw Solid-Light Laser Webs / Corrupted Symbiotic Webs connecting to sky spires
+        ctx.strokeStyle = isSymbioteSurge ? '#A855F7' : '#00F0FF';
         ctx.lineWidth = 3;
-        ctx.shadowColor = '#00F0FF';
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#00F0FF';
         ctx.shadowBlur = 20;
         ctx.beginPath();
         ctx.moveTo(-renderW * 0.32, -renderH * 0.12);
@@ -211,6 +252,11 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
       <div ref={containerRef} className="relative h-[250vh] w-full bg-[#030612]">
         <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
           <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+
+          {/* Symbiote Vignette when Surge is active */}
+          {isSymbioteSurge && (
+            <div className="absolute inset-0 symbiote-vignette pointer-events-none z-10" />
+          )}
 
           {/* TOP HUD: 2099 Status */}
           <div className="relative z-20 pt-20 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
@@ -291,6 +337,16 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
       <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
         <Spider2099GlitchNexus />
       </section>
+
+      {/* 3. ALCHEMAX KLYNTAR SYMBIOTE RESEARCH (Active during Symbiote Infestation Surge) */}
+      {isSymbioteSurge && (
+        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <LivingSymbioteCanvas
+            isSymbioteSurge={isSymbioteSurge}
+            onToggleSurge={onToggleSymbiote}
+          />
+        </section>
+      )}
     </div>
   );
 };

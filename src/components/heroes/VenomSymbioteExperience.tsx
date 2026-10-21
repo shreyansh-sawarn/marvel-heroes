@@ -86,9 +86,10 @@ export const VenomSymbioteExperience: React.FC<VenomProps> = ({
         const mouseDist = Math.hypot(dx, dy);
         const steerFactor = mouseRef.current.isHovering && mouseDist > 20 ? 0.35 : 0;
 
-        // Tendril blends towards mouse
+        // Tendril blends towards mouse (boosted by surge)
+        const surgeBoost = isSymbioteSurge ? 1.4 : 1.0;
         const currentAngle = t.angle * (1 - steerFactor) + mouseAngle * steerFactor + Math.sin(time + t.curlOffset) * 0.4;
-        const len = t.baseLength + Math.sin(time * 2 + t.curlOffset) * 30;
+        const len = (t.baseLength + Math.sin(time * 2 + t.curlOffset) * 30) * surgeBoost;
 
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
@@ -99,7 +100,7 @@ export const VenomSymbioteExperience: React.FC<VenomProps> = ({
         const segLen = len / segments;
 
         for (let s = 1; s <= segments; s++) {
-          const wave = Math.sin(time * 3 + s * 0.5 + t.curlOffset) * 14;
+          const wave = Math.sin(time * 3 + s * 0.5 + t.curlOffset) * (isSymbioteSurge ? 22 : 14);
           const a = currentAngle + (wave * Math.PI) / 180;
           px += Math.cos(a) * segLen;
           py += Math.sin(a) * segLen;
@@ -107,12 +108,12 @@ export const VenomSymbioteExperience: React.FC<VenomProps> = ({
         }
 
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = t.width;
+        ctx.lineWidth = t.width * (isSymbioteSurge ? 1.3 : 1.0);
         ctx.lineCap = 'round';
         ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)'; // Venom acidic green sheen
-        ctx.lineWidth = t.width * 0.3;
+        ctx.strokeStyle = isSymbioteSurge ? 'rgba(168, 85, 247, 0.75)' : 'rgba(16, 185, 129, 0.4)';
+        ctx.lineWidth = t.width * 0.35;
         ctx.stroke();
       });
       ctx.restore();
@@ -129,9 +130,19 @@ export const VenomSymbioteExperience: React.FC<VenomProps> = ({
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.shadowColor = '#10B981';
-        ctx.shadowBlur = 35;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#10B981';
+        ctx.shadowBlur = isSymbioteSurge ? 65 : 35;
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // Klyntar Primordial Overdrive Tint
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.25)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
         ctx.restore();
       } else {
         // High-impact Procedural Venom Maw & Eyes
@@ -307,7 +318,10 @@ export const VenomSymbioteExperience: React.FC<VenomProps> = ({
 
       {/* 2. LIVING SYMBIOTE SIMULATOR & SONIC TUNING FORK LAB */}
       <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
-        <LivingSymbioteCanvas isSymbioteSurge={true} />
+        <LivingSymbioteCanvas
+          isSymbioteSurge={isSymbioteSurge}
+          onToggleSurge={onToggleSymbiote}
+        />
       </section>
     </div>
   );

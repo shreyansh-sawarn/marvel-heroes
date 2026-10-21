@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { soundEngine } from '../../services/soundEngine';
 import { SpiderGwenRhythmStage } from '../spiderman/SpiderGwenRhythmStage';
+import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 import {
   Music,
   Heart,
@@ -60,12 +61,14 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
       speedY: (Math.random() - 0.5) * 0.6,
     }));
 
+    let time = 0;
     const render = () => {
-      // Fade out background slightly to leave watercolor stains
-      ctx.fillStyle = '#0F091E';
+      time += 0.03;
+      // Fade out background slightly with deep void ink when infected
+      ctx.fillStyle = isSymbioteSurge ? '#05020B' : '#0F091E';
       ctx.fillRect(0, 0, width, height);
 
-      // Watercolor Blobs drifting
+      // Watercolor Blobs drifting (shift to dark magenta & obsidian when surge)
       blobs.forEach((b) => {
         b.x += b.speedX;
         b.y += b.speedY;
@@ -74,8 +77,12 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
         if (b.y < -100) b.y = height + 100;
         if (b.y > height + 100) b.y = -100;
 
+        const blobColor = isSymbioteSurge
+          ? (b.color.includes('244') ? 'rgba(168, 85, 247, 0.22)' : 'rgba(220, 38, 38, 0.18)')
+          : b.color;
+
         const radial = ctx.createRadialGradient(b.x, b.y, 10, b.x, b.y, b.r);
-        radial.addColorStop(0, b.color);
+        radial.addColorStop(0, blobColor);
         radial.addColorStop(1, 'transparent');
         ctx.fillStyle = radial;
         ctx.beginPath();
@@ -83,10 +90,39 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
         ctx.fill();
       });
 
-      // Draw Spider-Gwen Hero (Proportionally scaled to viewport)
+      // Draw Spider-Gwen Hero / GWENOM (Proportionally scaled to viewport)
       const centerX = width / 2;
       const centerY = height * 0.48;
       const gwenScale = 0.95 + scrollProgress * 0.2;
+
+      // Draw GWENOM Erupting Tendrils & Viscous Ribbon Claws
+      if (isSymbioteSurge) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const tendrilCount = 8;
+        for (let t = 0; t < tendrilCount; t++) {
+          const angle = (t / tendrilCount) * Math.PI * 2 + Math.sin(time + t) * 0.4;
+          const len = 130 + Math.sin(time * 2 + t) * 40;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          const cpx = Math.cos(angle + 0.5) * (len * 0.6);
+          const cpy = Math.sin(angle + 0.5) * (len * 0.6);
+          const endX = Math.cos(angle) * len;
+          const endY = Math.sin(angle) * len;
+          ctx.quadraticCurveTo(cpx, cpy, endX, endY);
+          ctx.strokeStyle = '#A855F7';
+          ctx.lineWidth = 4.5;
+          ctx.shadowColor = '#A855F7';
+          ctx.shadowBlur = 25;
+          ctx.stroke();
+
+          // Obsidian inner core
+          ctx.strokeStyle = '#05020A';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       if (img.complete && img.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.72, 640);
@@ -97,35 +133,45 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(gwenScale, gwenScale);
-        ctx.shadowColor = '#F43F5E';
-        ctx.shadowBlur = 35;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#F43F5E';
+        ctx.shadowBlur = isSymbioteSurge ? 50 : 35;
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // GWENOM Purple Slime Tint Overlay
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.32)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
         ctx.restore();
       } else {
-        // High-impact artistic Ghost-Spider silhouette
+        // High-impact artistic Ghost-Spider / GWENOM silhouette
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(gwenScale, gwenScale);
 
-        // Neon Pink / Teal Halo
+        // Neon Pink / Teal / Alien Purple Halo
         ctx.beginPath();
         ctx.arc(0, 0, 110, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(244, 63, 94, 0.15)';
-        ctx.shadowColor = '#F43F5E';
-        ctx.shadowBlur = 35;
+        ctx.fillStyle = isSymbioteSurge ? 'rgba(168, 85, 247, 0.3)' : 'rgba(244, 63, 94, 0.15)';
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#F43F5E';
+        ctx.shadowBlur = 40;
         ctx.fill();
 
         // White Mask with Iconic Teal Hood Lining
-        ctx.fillStyle = '#F8FAFC';
-        ctx.strokeStyle = '#2DD4BF';
+        ctx.fillStyle = isSymbioteSurge ? '#181028' : '#F8FAFC';
+        ctx.strokeStyle = isSymbioteSurge ? '#A855F7' : '#2DD4BF';
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.ellipse(0, 0, 48, 70, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
 
-        // Distinctive Ghost-Spider Eyes
-        ctx.fillStyle = '#F43F5E';
+        // Distinctive Ghost-Spider / GWENOM Razor Eyes
+        ctx.fillStyle = isSymbioteSurge ? '#A855F7' : '#F43F5E';
         ctx.beginPath();
         ctx.ellipse(-18, -4, 8, 22, -0.2, 0, Math.PI * 2);
         ctx.fill();
@@ -176,6 +222,11 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
 
           {/* Comic Halftone Overlay */}
           <div className="absolute inset-0 comic-halftone-pink opacity-20 pointer-events-none" />
+
+          {/* Symbiote Vignette when Surge is active */}
+          {isSymbioteSurge && (
+            <div className="absolute inset-0 symbiote-vignette pointer-events-none z-10" />
+          )}
 
           {/* TOP HUD: Gwen Stacy Status */}
           <div className="relative z-20 pt-20 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
@@ -271,6 +322,16 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
       <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
         <SpiderGwenRhythmStage />
       </section>
+
+      {/* 3. GWENOM LIVING SYMBIOTE LAB (Active during Symbiote Infestation Surge) */}
+      {isSymbioteSurge && (
+        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <LivingSymbioteCanvas
+            isSymbioteSurge={isSymbioteSurge}
+            onToggleSurge={onToggleSymbiote}
+          />
+        </section>
+      )}
     </div>
   );
 };

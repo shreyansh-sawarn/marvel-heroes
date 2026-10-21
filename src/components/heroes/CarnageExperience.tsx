@@ -56,16 +56,17 @@ export const CarnageExperience: React.FC<CarnageProps> = ({
       const centerX = width / 2;
       const centerY = height * 0.45;
 
-      // Chaotic jagged red spikes shooting across screen
+      // Chaotic jagged red/purple spikes shooting across screen (surging when infested)
       ctx.save();
-      ctx.strokeStyle = '#DC2626';
-      ctx.lineWidth = 3;
-      ctx.shadowColor = '#DC2626';
-      ctx.shadowBlur = 20;
+      ctx.strokeStyle = isSymbioteSurge ? '#EF4444' : '#DC2626';
+      ctx.lineWidth = isSymbioteSurge ? 4.5 : 3;
+      ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#DC2626';
+      ctx.shadowBlur = isSymbioteSurge ? 35 : 20;
 
-      for (let i = 0; i < 18; i++) {
-        const angle = (i / 18) * Math.PI * 2 + Math.sin(time + i) * 0.2;
-        const len = 120 + Math.sin(time * 3 + i) * 80;
+      const spikeCount = isSymbioteSurge ? 32 : 18;
+      for (let i = 0; i < spikeCount; i++) {
+        const angle = (i / spikeCount) * Math.PI * 2 + Math.sin(time + i) * 0.25;
+        const len = (120 + Math.sin(time * 3 + i) * 80) * (isSymbioteSurge ? 1.5 : 1.0);
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(centerX + Math.cos(angle) * len, centerY + Math.sin(angle) * len);
@@ -85,9 +86,19 @@ export const CarnageExperience: React.FC<CarnageProps> = ({
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.shadowColor = '#DC2626';
-        ctx.shadowBlur = 40;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#DC2626';
+        ctx.shadowBlur = isSymbioteSurge ? 60 : 40;
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // Carnage Psychosis Surge Tint
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.25)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
         ctx.restore();
       } else {
         // High-impact Carnage Silhouette
@@ -132,7 +143,7 @@ export const CarnageExperience: React.FC<CarnageProps> = ({
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, [scrollProgress]);
+  }, [isSymbioteSurge, scrollProgress]);
 
   // Scroll listener
   useEffect(() => {
@@ -154,6 +165,11 @@ export const CarnageExperience: React.FC<CarnageProps> = ({
       <div ref={containerRef} className="relative h-[250vh] w-full bg-[#080202]">
         <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
           <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+
+          {/* Symbiote Vignette when Surge is active */}
+          {isSymbioteSurge && (
+            <div className="absolute inset-0 symbiote-vignette pointer-events-none z-10" />
+          )}
 
           {/* TOP HUD: Carnage Status */}
           <div className="relative z-20 pt-20 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
@@ -233,7 +249,10 @@ export const CarnageExperience: React.FC<CarnageProps> = ({
 
       {/* 2. LIVING SYMBIOTE TENDRILL LAB */}
       <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
-        <LivingSymbioteCanvas isSymbioteSurge={true} />
+        <LivingSymbioteCanvas
+          isSymbioteSurge={isSymbioteSurge}
+          onToggleSurge={onToggleSymbiote}
+        />
       </section>
     </div>
   );

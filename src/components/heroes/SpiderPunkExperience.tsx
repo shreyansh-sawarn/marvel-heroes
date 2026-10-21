@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { soundEngine } from '../../services/soundEngine';
 import { SpiderPunkAnarchyStage } from '../spiderman/SpiderPunkAnarchyStage';
+import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 import {
   Zap,
   Globe,
@@ -55,7 +56,7 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
       if (time - lastDrawTime < frameInterval) return;
       lastDrawTime = time;
 
-      ctx.fillStyle = '#0F0918';
+      ctx.fillStyle = isSymbioteSurge ? '#08020F' : '#0F0918';
       ctx.fillRect(0, 0, width, height);
 
       // Random Zine Collage Paper Slits & Safety Pins
@@ -66,7 +67,9 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
         const pw = 120 + Math.random() * 200;
         const ph = 40 + Math.random() * 60;
 
-        ctx.fillStyle = i % 2 === 0 ? 'rgba(236, 72, 153, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+        ctx.fillStyle = isSymbioteSurge
+          ? (i % 2 === 0 ? 'rgba(168, 85, 247, 0.25)' : 'rgba(234, 179, 8, 0.12)')
+          : (i % 2 === 0 ? 'rgba(236, 72, 153, 0.15)' : 'rgba(234, 179, 8, 0.15)');
         ctx.save();
         ctx.translate(px, py);
         ctx.rotate((Math.random() - 0.5) * 0.4);
@@ -75,12 +78,35 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
       }
       ctx.restore();
 
-      // Draw Spider-Punk Hero with Jerky Rotation Jitter
       // Draw Hobie Brown Punk Hero (Proportionally scaled to viewport)
       const centerX = width / 2;
       const centerY = height * 0.48;
       const jitterRot = (Math.random() - 0.5) * 0.05;
       const scale = 0.95 + scrollProgress * 0.2;
+
+      // Chaotic Symbiote Spikes & Tendril Eruption
+      if (isSymbioteSurge) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const tendrilCount = 8;
+        for (let t = 0; t < tendrilCount; t++) {
+          const angle = (t / tendrilCount) * Math.PI * 2;
+          const len = 125 + Math.sin(t * 1.8) * 40;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+          ctx.strokeStyle = '#A855F7';
+          ctx.lineWidth = 4;
+          ctx.shadowColor = '#EC4899';
+          ctx.shadowBlur = 20;
+          ctx.stroke();
+
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       if (img.complete && img.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.74, 620);
@@ -92,9 +118,19 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
         ctx.translate(centerX, centerY);
         ctx.rotate(jitterRot);
         ctx.scale(scale, scale);
-        ctx.shadowColor = '#EC4899';
-        ctx.shadowBlur = 35;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#EC4899';
+        ctx.shadowBlur = isSymbioteSurge ? 55 : 35;
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // Symbiote Punk Tint Overlay
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.3)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
         ctx.restore();
       } else {
         // High-impact Spiked Mohawk Mask Silhouette
@@ -158,6 +194,11 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
       <div ref={containerRef} className="relative h-[250vh] w-full bg-[#10081C]">
         <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
           <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+
+          {/* Symbiote Vignette when Surge is active */}
+          {isSymbioteSurge && (
+            <div className="absolute inset-0 symbiote-vignette pointer-events-none z-10" />
+          )}
 
           {/* TOP HUD: Punk Status */}
           <div className="relative z-20 pt-20 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
@@ -239,6 +280,16 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
       <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
         <SpiderPunkAnarchyStage />
       </section>
+
+      {/* 3. ANARCHY SYMBIOTE INFESTATION LAB (Active during Symbiote Infestation Surge) */}
+      {isSymbioteSurge && (
+        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <LivingSymbioteCanvas
+            isSymbioteSurge={isSymbioteSurge}
+            onToggleSurge={onToggleSymbiote}
+          />
+        </section>
+      )}
     </div>
   );
 };

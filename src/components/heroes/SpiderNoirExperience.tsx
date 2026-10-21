@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { soundEngine } from '../../services/soundEngine';
 import { SpiderNoirDetectiveOffice } from '../spiderman/SpiderNoirDetectiveOffice';
+import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 import {
   Flame,
   CloudRain,
@@ -84,13 +85,13 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
         }
       });
 
-      // Dramatic Flashlight Spotlight following Cursor
+      // Dramatic Flashlight Spotlight following Cursor (Alien violet when surge)
       const spotX = mouseRef.current.x || width / 2;
       const spotY = mouseRef.current.y || height / 2;
       const spotRadius = 180;
 
       const spotGrad = ctx.createRadialGradient(spotX, spotY, 20, spotX, spotY, spotRadius);
-      spotGrad.addColorStop(0, 'rgba(245, 158, 11, 0.25)'); // Warm amber match light
+      spotGrad.addColorStop(0, isSymbioteSurge ? 'rgba(168, 85, 247, 0.35)' : 'rgba(245, 158, 11, 0.25)');
       spotGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = spotGrad;
       ctx.beginPath();
@@ -102,6 +103,30 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
       const centerY = height * 0.48;
       const scale = 0.95 + scrollProgress * 0.2;
 
+      // Writhing Shadow Tendrils under trenchcoat when surge
+      if (isSymbioteSurge) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const tendrilCount = 8;
+        for (let t = 0; t < tendrilCount; t++) {
+          const angle = (t / tendrilCount) * Math.PI * 2;
+          const len = 110 + Math.sin(t * 1.5) * 35;
+          ctx.beginPath();
+          ctx.moveTo(0, 40);
+          ctx.quadraticCurveTo(Math.cos(angle) * (len * 0.6), Math.sin(angle) * (len * 0.6), Math.cos(angle) * len, Math.sin(angle) * len);
+          ctx.strokeStyle = '#A855F7';
+          ctx.lineWidth = 4;
+          ctx.shadowColor = '#A855F7';
+          ctx.shadowBlur = 20;
+          ctx.stroke();
+
+          ctx.strokeStyle = '#05050A';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       if (img.complete && img.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.72, 580);
         const ratio = targetHeight / img.naturalHeight;
@@ -111,9 +136,19 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
-        ctx.shadowColor = '#F59E0B';
-        ctx.shadowBlur = 30;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#F59E0B';
+        ctx.shadowBlur = isSymbioteSurge ? 50 : 30;
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // Symbiote Noir Shadow Wash Overlay
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(126, 34, 206, 0.32)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
         ctx.restore();
       } else {
         // High-impact Chiaroscuro Noir Fedora Mask Silhouette
@@ -175,6 +210,11 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
       <div ref={containerRef} className="relative h-[250vh] w-full bg-[#050507]">
         <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between">
           <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
+
+          {/* Symbiote Vignette when Surge is active */}
+          {isSymbioteSurge && (
+            <div className="absolute inset-0 symbiote-vignette pointer-events-none z-10" />
+          )}
 
           {/* TOP HUD: Noir 1933 Status */}
           <div className="relative z-20 pt-20 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
@@ -259,6 +299,16 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
       <section className="relative z-30 py-20 px-4 sm:px-8 max-w-7xl mx-auto">
         <SpiderNoirDetectiveOffice />
       </section>
+
+      {/* 3. 1933 KLYNTAR SYMBIOTE DOSSIER & LAB (Active during Symbiote Infestation Surge) */}
+      {isSymbioteSurge && (
+        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <LivingSymbioteCanvas
+            isSymbioteSurge={isSymbioteSurge}
+            onToggleSurge={onToggleSymbiote}
+          />
+        </section>
+      )}
     </div>
   );
 };

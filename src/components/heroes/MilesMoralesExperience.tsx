@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { SpiderHeroMeta } from '../../types';
 import { soundEngine } from '../../services/soundEngine';
 import { VenomBlastShockwave } from '../spiderman/VenomBlastShockwave';
+import { LivingSymbioteCanvas } from '../spiderman/LivingSymbioteCanvas';
 import {
   Zap,
   Paintbrush,
@@ -70,19 +71,26 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
-      // Deep Brooklyn Twilight Atmosphere
+      // Deep Brooklyn Twilight or Abyssal Klyntar Atmosphere
       const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, '#0A0518');
-      grad.addColorStop(0.4, '#1C062E');
-      grad.addColorStop(0.7, '#2D0A46');
-      grad.addColorStop(1, '#05060E');
+      if (isSymbioteSurge) {
+        grad.addColorStop(0, '#040108');
+        grad.addColorStop(0.4, '#130224');
+        grad.addColorStop(0.7, '#240438');
+        grad.addColorStop(1, '#050209');
+      } else {
+        grad.addColorStop(0, '#0A0518');
+        grad.addColorStop(0.4, '#1C062E');
+        grad.addColorStop(0.7, '#2D0A46');
+        grad.addColorStop(1, '#05060E');
+      }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
       // Inverted City Backdrop (What's Up Danger)
       if (bgImg.complete && bgImg.naturalWidth > 0) {
         ctx.save();
-        ctx.globalAlpha = 0.35;
+        ctx.globalAlpha = isSymbioteSurge ? 0.2 : 0.35;
         // Invert vertically so skyscrapers hang from the top of the sky
         ctx.translate(width / 2, height * 0.35);
         ctx.scale(1, -1);
@@ -103,11 +111,13 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
       const bWidth = width / buildingCount;
       for (let i = 0; i < buildingCount; i++) {
         const bHeight = 160 + Math.sin(i * 1.4) * 110 + scrollProgress * 120;
-        ctx.fillStyle = '#070914';
+        ctx.fillStyle = isSymbioteSurge ? '#05040B' : '#070914';
         ctx.fillRect(i * bWidth + glitchX, 0, bWidth - 4, bHeight);
 
-        // Windows with neon cyan and yellow lights
-        ctx.fillStyle = i % 2 === 0 ? 'rgba(250, 204, 21, 0.45)' : 'rgba(6, 182, 212, 0.45)';
+        // Windows with neon cyan and yellow or corrupted purple/crimson lights
+        ctx.fillStyle = isSymbioteSurge
+          ? (i % 2 === 0 ? 'rgba(168, 85, 247, 0.65)' : 'rgba(239, 68, 68, 0.6)')
+          : (i % 2 === 0 ? 'rgba(250, 204, 21, 0.45)' : 'rgba(6, 182, 212, 0.45)');
         for (let wy = 20; wy < bHeight - 20; wy += 24) {
           ctx.fillRect(i * bWidth + 8 + glitchX, wy, 5, 10);
           ctx.fillRect(i * bWidth + 18 + glitchX, wy, 5, 10);
@@ -119,6 +129,35 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
       const centerX = width / 2;
       const centerY = height * 0.48 + Math.sin(scrollProgress * Math.PI) * 50;
       const milesScale = 0.95 + scrollProgress * 0.25;
+
+      // Draw Living Symbiote Tendrils Erupting from Miles
+      if (isSymbioteSurge) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        const tendrilCount = 10;
+        for (let t = 0; t < tendrilCount; t++) {
+          const angle = (t / tendrilCount) * Math.PI * 2 + time * 0.0018;
+          const len = 120 + Math.sin(time * 0.003 + t) * 45;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          const cpx = Math.cos(angle + 0.6) * (len * 0.7);
+          const cpy = Math.sin(angle + 0.6) * (len * 0.7);
+          const endX = Math.cos(angle) * len;
+          const endY = Math.sin(angle) * len;
+          ctx.quadraticCurveTo(cpx, cpy, endX, endY);
+          ctx.strokeStyle = '#A855F7';
+          ctx.lineWidth = 5;
+          ctx.shadowColor = '#A855F7';
+          ctx.shadowBlur = 25;
+          ctx.stroke();
+
+          // Obsidian inner core
+          ctx.strokeStyle = '#05020A';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       if (img.complete && img.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.68, 580);
@@ -136,9 +175,19 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
         ctx.drawImage(img, -renderW / 2 - glitchX * 2.5, -renderH / 2 - glitchY * 2.5, renderW, renderH);
 
         ctx.globalAlpha = 1.0;
-        ctx.shadowColor = '#FACC15';
-        ctx.shadowBlur = scrollProgress > 0.3 ? 35 : 15;
+        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#FACC15';
+        ctx.shadowBlur = isSymbioteSurge ? 55 : (scrollProgress > 0.3 ? 35 : 15);
         ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
+
+        // Symbiote Infestation Surge Shade Overlay
+        if (isSymbioteSurge) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(147, 51, 234, 0.28)';
+          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
+          ctx.restore();
+        }
+
         ctx.restore();
       } else {
         // High-impact SVG/Canvas procedural silhouette fallback if image loading
@@ -274,6 +323,11 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
 
           {/* Comic Halftone Overlay */}
           <div className="absolute inset-0 comic-halftone-yellow opacity-25 pointer-events-none" />
+
+          {/* Symbiote Vignette when Surge is active */}
+          {isSymbioteSurge && (
+            <div className="absolute inset-0 symbiote-vignette pointer-events-none z-10" />
+          )}
 
           {/* TOP HUD: Miles Brooklyn Status */}
           <div className="relative z-20 pt-20 px-6 sm:px-12 flex items-center justify-between pointer-events-none">
@@ -448,6 +502,16 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
       <section className="relative z-30 py-8 px-4 sm:px-8 max-w-7xl mx-auto">
         <VenomBlastShockwave />
       </section>
+
+      {/* 4. LIVING SYMBIOTE RESONANCE LAB (Active during Symbiote Infestation Surge) */}
+      {isSymbioteSurge && (
+        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+          <LivingSymbioteCanvas
+            isSymbioteSurge={isSymbioteSurge}
+            onToggleSurge={onToggleSymbiote}
+          />
+        </section>
+      )}
     </div>
   );
 };
