@@ -49,6 +49,9 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
     const img = new Image();
     img.src = '/assets/noir_hero.png';
 
+    const symbioteImg = new Image();
+    symbioteImg.src = '/assets/noir_symbiote_hero.png';
+
     // Rain particles
     const raindrops = Array.from({ length: 90 }).map(() => ({
       x: Math.random() * width,
@@ -127,28 +130,20 @@ export const SpiderNoirExperience: React.FC<SpiderNoirProps> = ({
         ctx.restore();
       }
 
-      if (img.complete && img.naturalWidth > 0) {
+      const activeImg = isSymbioteSurge ? symbioteImg : img;
+
+      if (activeImg.complete && activeImg.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.72, 580);
-        const ratio = targetHeight / img.naturalHeight;
-        const renderW = img.naturalWidth * ratio;
+        const ratio = targetHeight / activeImg.naturalHeight;
+        const renderW = activeImg.naturalWidth * ratio;
         const renderH = targetHeight;
 
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(scale, scale);
         ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#F59E0B';
-        ctx.shadowBlur = isSymbioteSurge ? 50 : 30;
-        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
-
-        // Symbiote Noir Shadow Wash Overlay
-        if (isSymbioteSurge) {
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(126, 34, 206, 0.32)';
-          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
-          ctx.restore();
-        }
-
+        ctx.shadowBlur = isSymbioteSurge ? 55 : 30;
+        ctx.drawImage(activeImg, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact Chiaroscuro Noir Fedora Mask Silhouette

@@ -56,6 +56,9 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
     const img = new Image();
     img.src = '/assets/miles_hero.png';
 
+    const symbioteImg = new Image();
+    symbioteImg.src = '/assets/miles_symbiote_hero.png';
+
     const bgImg = new Image();
     bgImg.src = '/assets/nyc_skyline.jpg';
 
@@ -159,10 +162,12 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
         ctx.restore();
       }
 
-      if (img.complete && img.naturalWidth > 0) {
+      const activeImg = isSymbioteSurge ? symbioteImg : img;
+
+      if (activeImg.complete && activeImg.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.68, 580);
-        const ratio = targetHeight / img.naturalHeight;
-        const renderW = img.naturalWidth * ratio;
+        const ratio = targetHeight / activeImg.naturalHeight;
+        const renderW = activeImg.naturalWidth * ratio;
         const renderH = targetHeight;
 
         ctx.save();
@@ -171,22 +176,13 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
 
         // Chromatic split (Spider-Verse 3D Comic Halftone Offset)
         ctx.globalAlpha = 0.5;
-        ctx.drawImage(img, -renderW / 2 + glitchX * 2.5, -renderH / 2 + glitchY * 2.5, renderW, renderH);
-        ctx.drawImage(img, -renderW / 2 - glitchX * 2.5, -renderH / 2 - glitchY * 2.5, renderW, renderH);
+        ctx.drawImage(activeImg, -renderW / 2 + glitchX * 2.5, -renderH / 2 + glitchY * 2.5, renderW, renderH);
+        ctx.drawImage(activeImg, -renderW / 2 - glitchX * 2.5, -renderH / 2 - glitchY * 2.5, renderW, renderH);
 
         ctx.globalAlpha = 1.0;
         ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#FACC15';
         ctx.shadowBlur = isSymbioteSurge ? 55 : (scrollProgress > 0.3 ? 35 : 15);
-        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
-
-        // Symbiote Infestation Surge Shade Overlay
-        if (isSymbioteSurge) {
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(147, 51, 234, 0.28)';
-          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
-          ctx.restore();
-        }
+        ctx.drawImage(activeImg, -renderW / 2, -renderH / 2, renderW, renderH);
 
         ctx.restore();
       } else {
@@ -241,12 +237,12 @@ export const MilesMoralesExperience: React.FC<MilesExperienceProps> = ({
         ctx.restore();
       }
 
-      // Bio-Electric Lightning Arcs sparking from Miles
-      if (scrollProgress > 0.25 || isSymbioteSurge) {
+      // Bio-Electric Lightning Arcs sparking from Miles during normal high-velocity dive
+      if (!isSymbioteSurge && scrollProgress > 0.25) {
         ctx.save();
-        ctx.strokeStyle = isSymbioteSurge ? '#A855F7' : '#FACC15';
+        ctx.strokeStyle = '#FACC15';
         ctx.lineWidth = 3;
-        ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#FACC15';
+        ctx.shadowColor = '#FACC15';
         ctx.shadowBlur = 20;
 
         for (let i = 0; i < 4; i++) {

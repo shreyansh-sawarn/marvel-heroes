@@ -47,6 +47,9 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
     const img = new Image();
     img.src = '/assets/punk_hero.png';
 
+    const symbioteImg = new Image();
+    symbioteImg.src = '/assets/punk_symbiote_hero.png';
+
     let lastDrawTime = 0;
     const targetFps = 8; // 8 FPS authentic punk stop-motion
     const frameInterval = 1000 / targetFps;
@@ -109,9 +112,10 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
       }
 
       if (img.complete && img.naturalWidth > 0) {
+        const activeImg = isSymbioteSurge ? symbioteImg : img;
         const targetHeight = Math.min(height * 0.74, 620);
-        const ratio = targetHeight / img.naturalHeight;
-        const renderW = img.naturalWidth * ratio;
+        const ratio = targetHeight / activeImg.naturalHeight;
+        const renderW = activeImg.naturalWidth * ratio;
         const renderH = targetHeight;
 
         ctx.save();
@@ -120,16 +124,8 @@ export const SpiderPunkExperience: React.FC<SpiderPunkProps> = ({
         ctx.scale(scale, scale);
         ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#EC4899';
         ctx.shadowBlur = isSymbioteSurge ? 55 : 35;
-        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
-
-        // Symbiote Punk Tint Overlay
-        if (isSymbioteSurge) {
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(168, 85, 247, 0.3)';
-          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
-          ctx.restore();
-        }
+        ctx.drawImage(activeImg, -renderW / 2, -renderH / 2, renderW, renderH);
+        ctx.restore();
 
         ctx.restore();
       } else {

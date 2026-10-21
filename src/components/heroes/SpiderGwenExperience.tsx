@@ -51,6 +51,9 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
     const img = new Image();
     img.src = '/assets/gwen_hero.png';
 
+    const symbioteImg = new Image();
+    symbioteImg.src = '/assets/gwen_symbiote_hero.png';
+
     // Watercolor brush blobs
     const blobs = Array.from({ length: 18 }).map(() => ({
       x: Math.random() * width,
@@ -124,28 +127,20 @@ export const SpiderGwenExperience: React.FC<GwenExperienceProps> = ({
         ctx.restore();
       }
 
-      if (img.complete && img.naturalWidth > 0) {
+      const activeImg = isSymbioteSurge ? symbioteImg : img;
+
+      if (activeImg.complete && activeImg.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.72, 640);
-        const ratio = targetHeight / img.naturalHeight;
-        const renderW = img.naturalWidth * ratio;
+        const ratio = targetHeight / activeImg.naturalHeight;
+        const renderW = activeImg.naturalWidth * ratio;
         const renderH = targetHeight;
 
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.scale(gwenScale, gwenScale);
         ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#F43F5E';
-        ctx.shadowBlur = isSymbioteSurge ? 50 : 35;
-        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
-
-        // GWENOM Purple Slime Tint Overlay
-        if (isSymbioteSurge) {
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(168, 85, 247, 0.32)';
-          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
-          ctx.restore();
-        }
-
+        ctx.shadowBlur = isSymbioteSurge ? 55 : 35;
+        ctx.drawImage(activeImg, -renderW / 2, -renderH / 2, renderW, renderH);
         ctx.restore();
       } else {
         // High-impact artistic Ghost-Spider / GWENOM silhouette

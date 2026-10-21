@@ -47,6 +47,9 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
     const img = new Image();
     img.src = '/assets/spider2099_hero.png';
 
+    const symbioteImg = new Image();
+    symbioteImg.src = '/assets/spider2099_symbiote_hero.png';
+
     const bgImg = new Image();
     bgImg.src = '/assets/cyberpunk_2099_bg.jpg';
 
@@ -148,10 +151,12 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
         ctx.restore();
       }
 
-      if (img.complete && img.naturalWidth > 0) {
+      const activeImg = isSymbioteSurge ? symbioteImg : img;
+
+      if (activeImg.complete && activeImg.naturalWidth > 0) {
         const targetHeight = Math.min(height * 0.72, 600);
-        const ratio = targetHeight / img.naturalHeight;
-        const renderW = img.naturalWidth * ratio;
+        const ratio = targetHeight / activeImg.naturalHeight;
+        const renderW = activeImg.naturalWidth * ratio;
         const renderH = targetHeight;
 
         ctx.save();
@@ -159,16 +164,8 @@ export const Spider2099Experience: React.FC<Spider2099Props> = ({
         ctx.scale(scale, scale);
         ctx.shadowColor = isSymbioteSurge ? '#A855F7' : '#FF0055';
         ctx.shadowBlur = isSymbioteSurge ? 55 : 35;
-        ctx.drawImage(img, -renderW / 2, -renderH / 2, renderW, renderH);
-
-        // Symbiote 2099 Alien Glitch Overlay
-        if (isSymbioteSurge) {
-          ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
-          ctx.fillStyle = 'rgba(168, 85, 247, 0.3)';
-          ctx.fillRect(-renderW / 2, -renderH / 2, renderW, renderH);
-          ctx.restore();
-        }
+        ctx.drawImage(activeImg, -renderW / 2, -renderH / 2, renderW, renderH);
+        ctx.restore();
 
         // Draw Solid-Light Laser Webs / Corrupted Symbiotic Webs connecting to sky spires
         ctx.strokeStyle = isSymbioteSurge ? '#A855F7' : '#00F0FF';
