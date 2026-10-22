@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
-import { SpiderHeroId } from '../../types';
-import { SPIDER_HEROES } from '../../data/spiderHeroes';
-import { soundEngine } from '../../services/soundEngine';
+import { SpiderHeroId } from '../types';
+import { SPIDER_HEROES } from '../data/spiderHeroes';
+import { soundEngine } from '../services/soundEngine';
 import { Orbit } from 'lucide-react';
 
-interface MultiverseCosmicWebProps {
+interface CosmicWeb3DProps {
   currentHeroId: SpiderHeroId;
   onSelectHero: (heroId: SpiderHeroId) => void;
   isSymbioteSurge: boolean;
@@ -17,10 +17,9 @@ interface NodeData {
   alias: string;
   color: string;
   position: THREE.Vector3;
-  mesh?: THREE.Mesh;
 }
 
-export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
+export const CosmicWeb3D: React.FC<CosmicWeb3DProps> = ({
   currentHeroId,
   onSelectHero,
   isSymbioteSurge,
@@ -36,7 +35,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
     const width = container.clientWidth || 800;
     const height = 480;
 
-    // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(isSymbioteSurge ? 0x05020c : 0x070914, 0.002);
 
@@ -49,7 +47,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 2. Ambient & Point Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
@@ -57,7 +54,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
     coreLight.position.set(0, 0, 0);
     scene.add(coreLight);
 
-    // 3. Multiverse Cosmic Web Geometry (Concentric Web Rings & Radial Spokes)
     const webGroup = new THREE.Group();
     scene.add(webGroup);
 
@@ -69,8 +65,7 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
     });
 
     // Concentric web polygon rings
-    const ringCount = 6;
-    for (let r = 1; r <= ringCount; r++) {
+    for (let r = 1; r <= 6; r++) {
       const radius = r * 22;
       const points: THREE.Vector3[] = [];
       const segments = 16;
@@ -80,24 +75,20 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
         points.push(new THREE.Vector3(Math.cos(theta) * (radius + wave), Math.sin(theta) * (radius + wave), (r % 2 === 0 ? 5 : -5)));
       }
       const ringGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const ringLine = new THREE.Line(ringGeo, webMaterial);
-      webGroup.add(ringLine);
+      webGroup.add(new THREE.Line(ringGeo, webMaterial));
     }
 
     // Radial web spokes
-    const spokeCount = 12;
-    for (let s = 0; s < spokeCount; s++) {
-      const theta = (s / spokeCount) * Math.PI * 2;
-      const points: THREE.Vector3[] = [
+    for (let s = 0; s < 12; s++) {
+      const theta = (s / 12) * Math.PI * 2;
+      const points = [
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(Math.cos(theta) * 145, Math.sin(theta) * 145, (s % 2 === 0 ? 12 : -12)),
       ];
-      const spokeGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const spokeLine = new THREE.Line(spokeGeo, webMaterial);
-      webGroup.add(spokeLine);
+      webGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), webMaterial));
     }
 
-    // 4. Dimensional Reality Earth Nodes
+    // 8 Multiverse Dimensional Earth Nodes
     const heroesList: SpiderHeroId[] = [
       'spiderman',
       'miles',
@@ -113,7 +104,7 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
       const meta = SPIDER_HEROES[id];
       const angle = (idx / heroesList.length) * Math.PI * 2;
       const dist = 75 + (idx % 2 === 0 ? 15 : -10);
-      const z = (Math.sin(idx * 2) * 20);
+      const z = Math.sin(idx * 2) * 20;
       return {
         heroId: id,
         earth: meta.earthDesignation,
@@ -141,7 +132,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
       webGroup.add(mesh);
       nodeMeshes.push({ mesh, data: node });
 
-      // Pulse Halo Ring for Current Hero
       if (isCurrent) {
         const haloGeo = new THREE.RingGeometry(9, 11, 32);
         const haloMat = new THREE.MeshBasicMaterial({
@@ -150,13 +140,13 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
           transparent: true,
           opacity: 0.7,
         });
-        const haloMesh = new THREE.Mesh(haloGeo, haloMat);
-        haloMesh.position.copy(node.position);
-        webGroup.add(haloMesh);
+        const halo = new THREE.Mesh(haloGeo, haloMat);
+        halo.position.copy(node.position);
+        webGroup.add(halo);
       }
     });
 
-    // 5. Cosmic Particle Field (Floating Multiversal Embers)
+    // Cosmic Particle Embers
     const particleCount = 400;
     const particleGeo = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
@@ -175,7 +165,7 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
-    // 6. Interactive Raycasting & Mouse Rotation
+    // Mouse Drag Rotation
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let isDragging = false;
@@ -202,7 +192,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
         prevMouseY = e.clientY;
       }
 
-      // Hover check
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(nodeMeshes.map((n) => n.mesh));
       if (intersects.length > 0) {
@@ -238,7 +227,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
     window.addEventListener('mouseup', onPointerUp);
     container.addEventListener('click', onClick);
 
-    // 7. Render Animation Loop
     let time = 0;
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -248,14 +236,11 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
         webGroup.rotation.y += 0.002;
         webGroup.rotation.z = Math.sin(time * 0.5) * 0.05;
       }
-
       particles.rotation.y -= 0.001;
-
       renderer.render(scene, camera);
     };
     animate();
 
-    // Resize Handler
     const handleResize = () => {
       if (!container) return;
       const w = container.clientWidth || 800;
@@ -280,7 +265,6 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
 
   return (
     <div className="rounded-3xl border border-white/10 bg-[#070914] p-6 sm:p-10 shadow-2xl relative overflow-hidden select-none">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-4 border-b border-white/10 gap-4">
         <div>
           <div className="inline-flex items-center space-x-2 text-[11px] font-mono uppercase tracking-widest text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/30 mb-2">
@@ -291,13 +275,12 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
             EXPLORE THE <span className="text-hero-primary">MULTIVERSE</span>
           </h2>
           <p className="text-zinc-400 text-xs sm:text-sm font-sans mt-1">
-            Click and drag to rotate the cosmic node constellation. Click any reality orb to initialize an instant multiversal warp!
+            Click and drag to rotate the 3D cosmic web. Click any reality orb to warp instantaneously!
           </p>
         </div>
 
-        {/* Hovered Hero Preview Card */}
         {activeHoverHero && (
-          <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl flex items-center space-x-3 self-start md:self-auto animate-fadeIn">
+          <div className="bg-black/80 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl flex items-center space-x-3 self-start md:self-auto">
             <div
               className="w-4 h-4 rounded-full shadow-lg"
               style={{ backgroundColor: activeHoverHero.primaryColor }}
@@ -311,46 +294,16 @@ export const MultiverseCosmicWeb: React.FC<MultiverseCosmicWebProps> = ({
               </span>
             </div>
             <span className="text-[10px] font-mono font-bold bg-white/10 text-cyan-300 px-2 py-1 rounded-lg">
-              CLICK TO WARP
+              WARP NOW
             </span>
           </div>
         )}
       </div>
 
-      {/* 3D WebGL Canvas Viewport */}
       <div
         ref={mountRef}
         className="relative w-full h-[480px] rounded-2xl overflow-hidden bg-[#03050B] border border-white/5 cursor-grab active:cursor-grabbing"
       />
-
-      {/* Bottom Quick-Select Hero Chips */}
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2 pt-4 border-t border-white/10">
-        {(Object.keys(SPIDER_HEROES) as SpiderHeroId[]).map((id) => {
-          const h = SPIDER_HEROES[id];
-          const isCurrent = id === currentHeroId;
-          return (
-            <button
-              key={id}
-              onClick={() => {
-                soundEngine.playDimensionalWarp();
-                onSelectHero(id);
-              }}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition flex items-center space-x-2 active:scale-95 ${
-                isCurrent
-                  ? 'bg-white/15 border-white text-white shadow-lg'
-                  : 'bg-black/50 border-white/10 text-zinc-400 hover:text-white hover:border-white/25'
-              }`}
-            >
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: h.primaryColor }}
-              />
-              <span>{h.earthDesignation}</span>
-              <span className="hidden sm:inline text-zinc-500 font-normal">({h.alias})</span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 };

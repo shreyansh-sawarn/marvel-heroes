@@ -1,23 +1,21 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { SpiderHeroMeta, SpiderHeroId } from '../../types';
-import { soundEngine } from '../../services/soundEngine';
+import { SpiderHeroMeta, SpiderHeroId } from '../types';
+import { soundEngine } from '../services/soundEngine';
+import { SPIDER_HEROES } from '../data/spiderHeroes';
 import {
   Radio,
   Volume2,
-  ShieldAlert,
   Sparkles,
-  Compass,
-  Crosshair,
   Flame,
   RotateCcw,
+  Crosshair,
 } from 'lucide-react';
 
-interface SpiderNexusStageProps {
+interface HeroStageProps {
   hero: SpiderHeroMeta;
   isSymbioteSurge: boolean;
   onToggleSymbiote: () => void;
-  onOpenSelector: () => void;
-  onSelectHero?: (heroId: SpiderHeroId) => void;
+  onSelectHero: (heroId: SpiderHeroId) => void;
 }
 
 interface WebStrand {
@@ -26,11 +24,10 @@ interface WebStrand {
   startY: number;
   targetX: number;
   targetY: number;
-  progress: number; // 0 to 1
+  progress: number;
   oscillation: number;
   frequency: number;
   amplitude: number;
-  alpha: number;
   life: number;
   maxLife: number;
   color: string;
@@ -47,65 +44,69 @@ interface TendrilSpur {
   curlSpeed: number;
   width: number;
   color: string;
-  seed: number;
 }
 
-interface ComicExclamation {
+interface SlimeParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  alpha: number;
+  color: string;
+}
+
+interface ComicBurst {
   id: number;
   x: number;
   y: number;
   text: string;
   color: string;
-  scale: number;
-  opacity: number;
   rotation: number;
+  scale: number;
 }
 
-export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
+export const HeroStage: React.FC<HeroStageProps> = ({
   hero,
   isSymbioteSurge,
   onToggleSymbiote,
-  onOpenSelector,
+  onSelectHero,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // UI Interactive States
+  // States
   const [spiderSenseActive, setSpiderSenseActive] = useState(false);
-  const [sonicTuningFreq, setSonicTuningFreq] = useState(880);
+  const [sonicFreq, setSonicFreq] = useState(880);
   const [webAmmo, setWebAmmo] = useState(100);
   const [isSlowMo, setIsSlowMo] = useState(false);
   const [infestProgress, setInfestProgress] = useState(isSymbioteSurge ? 1 : 0);
-  const [activeExclamations, setActiveExclamations] = useState<ComicExclamation[]>([]);
+  const [bursts, setBursts] = useState<ComicBurst[]>([]);
 
   // Mouse & Parallax tracking
   const mouseRef = useRef({
     x: 0,
     y: 0,
-    targetX: 0,
-    targetY: 0,
     normX: 0,
     normY: 0,
-    isDown: false,
+    targetNormX: 0,
+    targetNormY: 0,
   });
 
-  // Physics Web Strands & Symbiote Tendril spurs
   const websRef = useRef<WebStrand[]>([]);
   const tendrilsRef = useRef<TendrilSpur[]>([]);
-  const slimeParticlesRef = useRef<
-    Array<{ x: number; y: number; vx: number; vy: number; radius: number; alpha: number; color: string }>
-  >([]);
+  const particlesRef = useRef<SlimeParticle[]>([]);
   const shakeRef = useRef(0);
 
-  // Asset image refs
-  const heroImageRef = useRef<HTMLImageElement | null>(null);
-  const symbioteImageRef = useRef<HTMLImageElement | null>(null);
-  const bgImageRef = useRef<HTMLImageElement | null>(null);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+  // Images
+  const heroImgRef = useRef<HTMLImageElement | null>(null);
+  const symImgRef = useRef<HTMLImageElement | null>(null);
+  const bgImgRef = useRef<HTMLImageElement | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Determine active hero images
-  const getHeroAssets = useCallback((heroId: SpiderHeroId) => {
-    switch (heroId) {
+  // Asset mapping for each hero
+  const getHeroAssets = useCallback((id: SpiderHeroId) => {
+    switch (id) {
       case 'miles':
         return {
           hero: '/assets/miles_hero.png',
@@ -158,61 +159,60 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
     }
   }, []);
 
-  // Preload character & symbiote cutout assets
+  // Preload assets & setup tendril anchors across anatomy
   useEffect(() => {
+    setIsLoaded(false);
     const assets = getHeroAssets(hero.id);
-    let loaded = 0;
-    const total = 3;
-
-    const checkComplete = () => {
-      loaded++;
-      if (loaded >= total) setImagesLoaded(true);
+    let count = 0;
+    const check = () => {
+      count++;
+      if (count >= 3) setIsLoaded(true);
     };
 
-    const heroImg = new Image();
-    heroImg.src = assets.hero;
-    heroImg.onload = () => {
-      heroImageRef.current = heroImg;
-      checkComplete();
+    const hImg = new Image();
+    hImg.src = assets.hero;
+    hImg.onload = () => {
+      heroImgRef.current = hImg;
+      check();
     };
-    heroImg.onerror = checkComplete;
+    hImg.onerror = check;
 
-    const symImg = new Image();
-    symImg.src = assets.symbiote;
-    symImg.onload = () => {
-      symbioteImageRef.current = symImg;
-      checkComplete();
+    const sImg = new Image();
+    sImg.src = assets.symbiote;
+    sImg.onload = () => {
+      symImgRef.current = sImg;
+      check();
     };
-    symImg.onerror = checkComplete;
+    sImg.onerror = check;
 
-    const bgImg = new Image();
-    bgImg.src = assets.bg;
-    bgImg.onload = () => {
-      bgImageRef.current = bgImg;
-      checkComplete();
+    const bImg = new Image();
+    bImg.src = assets.bg;
+    bImg.onload = () => {
+      bgImgRef.current = bImg;
+      check();
     };
-    bgImg.onerror = checkComplete;
+    bImg.onerror = check;
 
-    // Initialize living organic symbiote tendrils emerging from anatomy
-    const bodyPoints = [
-      { x: -35, y: -130, angle: -Math.PI * 0.75 }, // Left shoulder
-      { x: 35, y: -130, angle: -Math.PI * 0.25 },  // Right shoulder
-      { x: -65, y: -80, angle: -Math.PI * 0.9 },   // Left bicep
-      { x: 65, y: -80, angle: -Math.PI * 0.1 },    // Right bicep
-      { x: -95, y: -20, angle: Math.PI },          // Left forearm
-      { x: 95, y: -20, angle: 0 },                 // Right forearm
-      { x: -25, y: -50, angle: -Math.PI * 0.5 },   // Chest left
-      { x: 25, y: -50, angle: -Math.PI * 0.5 },    // Chest right
-      { x: 0, y: -10, angle: Math.PI * 0.5 },      // Abdomen
-      { x: -45, y: 45, angle: Math.PI * 0.65 },    // Left thigh
-      { x: 45, y: 45, angle: Math.PI * 0.35 },     // Right thigh
-      { x: -85, y: 110, angle: Math.PI * 0.8 },    // Left shin
-      { x: 85, y: 110, angle: Math.PI * 0.2 },     // Right shin
-      { x: 0, y: -180, angle: -Math.PI * 0.5 },    // Head crown
+    // Anatomical body anchors for living tendrils
+    const anchors = [
+      { x: -35, y: -130, angle: -Math.PI * 0.75 },
+      { x: 35, y: -130, angle: -Math.PI * 0.25 },
+      { x: -65, y: -75, angle: -Math.PI * 0.9 },
+      { x: 65, y: -75, angle: -Math.PI * 0.1 },
+      { x: -95, y: -15, angle: Math.PI },
+      { x: 95, y: -15, angle: 0 },
+      { x: -25, y: -45, angle: -Math.PI * 0.5 },
+      { x: 25, y: -45, angle: -Math.PI * 0.5 },
+      { x: 0, y: -10, angle: Math.PI * 0.5 },
+      { x: -45, y: 45, angle: Math.PI * 0.65 },
+      { x: 45, y: 45, angle: Math.PI * 0.35 },
+      { x: -85, y: 110, angle: Math.PI * 0.8 },
+      { x: 85, y: 110, angle: Math.PI * 0.2 },
+      { x: 0, y: -180, angle: -Math.PI * 0.5 },
     ];
 
     const spurs: TendrilSpur[] = [];
-    bodyPoints.forEach((bp, idx) => {
+    anchors.forEach((bp, idx) => {
       for (let k = 0; k < 2; k++) {
         spurs.push({
           originX: bp.x + (Math.random() - 0.5) * 15,
@@ -224,55 +224,51 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
           curlSpeed: 0.02 + Math.random() * 0.04,
           width: 5 + Math.random() * 7,
           color: idx % 2 === 0 ? '#3B0764' : '#6B21A8',
-          seed: Math.random() * 1000,
         });
       }
     });
     tendrilsRef.current = spurs;
   }, [getHeroAssets, hero.id]);
 
-  // Smoothly interpolate infestation transition (0 -> 1 or 1 -> 0)
+  // Infest progress interpolation
   useEffect(() => {
-    let animFrame: number;
+    let anim: number;
     const target = isSymbioteSurge ? 1 : 0;
     const step = () => {
-      setInfestProgress((curr) => {
-        const diff = target - curr;
+      setInfestProgress((c) => {
+        const diff = target - c;
         if (Math.abs(diff) < 0.01) return target;
-        return curr + diff * 0.08;
+        return c + diff * 0.08;
       });
       if (Math.abs(target - infestProgress) >= 0.01) {
-        animFrame = requestAnimationFrame(step);
+        anim = requestAnimationFrame(step);
       }
     };
-    animFrame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animFrame);
+    anim = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(anim);
   }, [infestProgress, isSymbioteSurge]);
 
-  // Mouse Parallax Event Handlers
+  // Mouse Parallax Move
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const normX = (x / rect.width) * 2 - 1;
-    const normY = (y / rect.height) * 2 - 1;
-
-    mouseRef.current.targetX = normX;
-    mouseRef.current.targetY = normY;
     mouseRef.current.x = x;
     mouseRef.current.y = y;
+    mouseRef.current.targetNormX = (x / rect.width) * 2 - 1;
+    mouseRef.current.targetNormY = (y / rect.height) * 2 - 1;
   };
 
-  // Trigger Spider-Sense precognitive pulse
+  // Trigger Spider-Sense Precognitive Wave
   const triggerSpiderSense = () => {
     setSpiderSenseActive(true);
     soundEngine.playSpiderSense();
     setTimeout(() => setSpiderSenseActive(false), 900);
   };
 
-  // Interactive Web-Shoot on click / drag
-  const handleShootWeb = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Interactive Web-Shoot on click
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -285,17 +281,14 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
     }
 
     setWebAmmo((prev) => Math.max(0, prev - 8));
-
-    // Calculate hero wrist anchor position (near center)
     const heroX = rect.width / 2;
     const heroY = rect.height * 0.52;
 
     if (isSymbioteSurge) {
-      // Visceral Symbiote Tendril Whip Strike
+      // Visceral Symbiote Tendril Lash
       soundEngine.playSymbioteTendril();
       shakeRef.current = 10;
 
-      // Spawn thick organic tendril strand
       websRef.current.push({
         id: Date.now() + Math.random(),
         startX: heroX,
@@ -306,18 +299,17 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         oscillation: 0,
         frequency: 8,
         amplitude: 35,
-        alpha: 1,
         life: 140,
         maxLife: 140,
         color: '#A855F7',
         isSymbiote: true,
       });
 
-      // Spawn dripping slime particles
+      // Viscous slime splatter
       for (let i = 0; i < 18; i++) {
         const speed = 2 + Math.random() * 7;
         const angle = Math.random() * Math.PI * 2;
-        slimeParticlesRef.current.push({
+        particlesRef.current.push({
           x: targetX,
           y: targetY,
           vx: Math.cos(angle) * speed,
@@ -328,12 +320,9 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         });
       }
 
-      // Symbiote Exclamation
-      const words = ['WHIP!', 'DEVOUR!', 'KLYNTAR!', 'LASH!'];
-      const chosen = words[Math.floor(Math.random() * words.length)];
-      addExclamation(targetX, targetY, chosen, '#A855F7');
+      spawnBurst(targetX, targetY, 'WHIP!', '#A855F7');
     } else {
-      // Classic Snappy Web-Shoot
+      // Snappy Pneumatic Web Shoot
       soundEngine.playWebShoot();
       shakeRef.current = 3;
 
@@ -347,43 +336,37 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         oscillation: 0,
         frequency: 14,
         amplitude: 18,
-        alpha: 1,
         life: 180,
         maxLife: 180,
         color: hero.accentColor || '#00B4D8',
         isSymbiote: false,
       });
 
-      // Classic Comic Exclamation
-      const words = ['THWIP!', 'SNIKT!', 'ZIP!', 'FLIP!'];
-      const chosen = words[Math.floor(Math.random() * words.length)];
-      addExclamation(targetX, targetY, chosen, hero.primaryColor);
+      spawnBurst(targetX, targetY, 'THWIP!', hero.primaryColor);
     }
   };
 
-  const addExclamation = (x: number, y: number, text: string, color: string) => {
-    const item: ComicExclamation = {
+  const spawnBurst = (x: number, y: number, text: string, color: string) => {
+    const burst: ComicBurst = {
       id: Date.now() + Math.random(),
       x,
       y,
       text,
       color,
-      scale: 0.8,
-      opacity: 1,
       rotation: (Math.random() - 0.5) * 0.4,
+      scale: 0.8,
     };
-    setActiveExclamations((prev) => [...prev.slice(-4), item]);
+    setBursts((prev) => [...prev.slice(-3), burst]);
     setTimeout(() => {
-      setActiveExclamations((prev) => prev.filter((i) => i.id !== item.id));
-    }, 900);
+      setBursts((prev) => prev.filter((b) => b.id !== burst.id));
+    }, 850);
   };
 
-  // Sonic Bell Purge (Repels Symbiote)
+  // Ring Cathedral Sonic Bell (Purges Symbiote)
   const triggerSonicPurge = () => {
-    soundEngine.playSonicScreech(sonicTuningFreq);
+    soundEngine.playSonicScreech(sonicFreq);
     shakeRef.current = 14;
 
-    // Repel tendrils outwards
     tendrilsRef.current.forEach((t) => {
       t.targetLength = 20;
     });
@@ -395,13 +378,7 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
     }
   };
 
-  // Reload Web Fluid Cartridge
-  const handleReloadWeb = () => {
-    soundEngine.playTensileSnap();
-    setWebAmmo(100);
-  };
-
-  // MAIN CINEMATIC WEBGL/2D RENDER PIPELINE
+  // RENDER ANIMATION PIPELINE
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -425,11 +402,11 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
       const dt = isSlowMo ? 0.005 : 0.025;
       time += dt;
 
-      // Mouse Lerp
-      mouseRef.current.normX += (mouseRef.current.targetX - mouseRef.current.normX) * 0.08;
-      mouseRef.current.normY += (mouseRef.current.targetY - mouseRef.current.normY) * 0.08;
+      // Mouse Parallax Lerp
+      mouseRef.current.normX += (mouseRef.current.targetNormX - mouseRef.current.normX) * 0.08;
+      mouseRef.current.normY += (mouseRef.current.targetNormY - mouseRef.current.normY) * 0.08;
 
-      // Screen Shake Decay
+      // Screen Shake
       let sx = 0;
       let sy = 0;
       if (shakeRef.current > 0) {
@@ -441,11 +418,11 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
       ctx.save();
       ctx.translate(sx, sy);
 
-      // 1. SKYLINE / ENVIRONMENT BACKDROP (Multi-Plane Parallax)
+      // 1. SKYLINE / ENVIRONMENT BACKDROP
       ctx.fillStyle = isSymbioteSurge ? '#050209' : '#070913';
       ctx.fillRect(0, 0, width, height);
 
-      const bg = bgImageRef.current;
+      const bg = bgImgRef.current;
       if (bg && bg.complete && bg.naturalWidth > 0) {
         ctx.save();
         const panX = -mouseRef.current.normX * 35;
@@ -457,31 +434,30 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         ctx.globalAlpha = isSymbioteSurge ? 0.22 : 0.45;
         ctx.drawImage(bg, (width - bw) / 2 + panX, (height - bh) / 2 + panY, bw, bh);
 
-        // Klyntar Atmospheric Abyssal Fog or Golden Hour Sunset
+        // Atmosphere Wash
         if (isSymbioteSurge) {
-          const fogGrad = ctx.createRadialGradient(width / 2, height / 2, 80, width / 2, height / 2, width * 0.7);
-          fogGrad.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
-          fogGrad.addColorStop(0.5, 'rgba(30, 4, 45, 0.45)');
-          fogGrad.addColorStop(1, 'rgba(5, 2, 9, 0.85)');
-          ctx.fillStyle = fogGrad;
+          const fog = ctx.createRadialGradient(width / 2, height / 2, 80, width / 2, height / 2, width * 0.7);
+          fog.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
+          fog.addColorStop(0.5, 'rgba(30, 4, 45, 0.45)');
+          fog.addColorStop(1, 'rgba(5, 2, 9, 0.85)');
+          ctx.fillStyle = fog;
           ctx.fillRect(0, 0, width, height);
         } else {
-          const sunsetGrad = ctx.createLinearGradient(0, 0, 0, height);
-          sunsetGrad.addColorStop(0, 'rgba(251, 146, 60, 0.12)');
-          sunsetGrad.addColorStop(0.6, 'rgba(226, 54, 54, 0.1)');
-          sunsetGrad.addColorStop(1, 'rgba(7, 9, 19, 0.8)');
-          ctx.fillStyle = sunsetGrad;
+          const sunset = ctx.createLinearGradient(0, 0, 0, height);
+          sunset.addColorStop(0, 'rgba(251, 146, 60, 0.12)');
+          sunset.addColorStop(0.6, 'rgba(226, 54, 54, 0.1)');
+          sunset.addColorStop(1, 'rgba(7, 9, 19, 0.8)');
+          ctx.fillStyle = sunset;
           ctx.fillRect(0, 0, width, height);
         }
         ctx.restore();
       }
 
-      // Halftone Comic Grid
+      // Halftone Comic Dot Matrix
       ctx.save();
       ctx.fillStyle = isSymbioteSurge ? 'rgba(168, 85, 247, 0.04)' : 'rgba(255, 255, 255, 0.03)';
-      const dotSpacing = 28;
-      for (let dx = 0; dx < width; dx += dotSpacing) {
-        for (let dy = 0; dy < height; dy += dotSpacing) {
+      for (let dx = 0; dx < width; dx += 28) {
+        for (let dy = 0; dy < height; dy += 28) {
           ctx.beginPath();
           ctx.arc(dx, dy, 1.2, 0, Math.PI * 2);
           ctx.fill();
@@ -489,14 +465,14 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
       }
       ctx.restore();
 
-      // 2. HERO CENTER STAGE WITH 3D DEPTH & GYROSCOPIC TILT
+      // 2. HERO CENTER STAGE
       const centerX = width / 2;
       const centerY = height * 0.52;
       const heroParallaxX = mouseRef.current.normX * 18;
       const heroParallaxY = mouseRef.current.normY * 12;
       const heroTilt = mouseRef.current.normX * 0.035;
 
-      // Draw Hero Grounding Shadow
+      // Grounding Shadow
       ctx.save();
       ctx.translate(centerX + heroParallaxX * 0.4, height * 0.88);
       ctx.beginPath();
@@ -507,13 +483,12 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
       ctx.fill();
       ctx.restore();
 
-      // Draw Character (Classic Suit & Symbiote Suit with smooth crossfade & tendril wrap)
-      const normalImg = heroImageRef.current;
-      const symImg = symbioteImageRef.current;
-
+      // Character Rendering (Classic Suit & Symbiote Suit with smooth crossfade)
+      const normalImg = heroImgRef.current;
+      const symImg = symImgRef.current;
       const targetH = Math.min(height * 0.78, 620);
 
-      // Render Normal Hero
+      // Normal Hero
       if (normalImg && normalImg.complete && normalImg.naturalWidth > 0) {
         const ratio = targetH / normalImg.naturalHeight;
         const nw = normalImg.naturalWidth * ratio;
@@ -524,7 +499,6 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         ctx.rotate(heroTilt);
         ctx.globalAlpha = Math.max(0, 1 - infestProgress);
 
-        // Glow Aura
         ctx.shadowColor = hero.primaryColor;
         ctx.shadowBlur = spiderSenseActive ? 55 : 20;
 
@@ -532,7 +506,7 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         ctx.restore();
       }
 
-      // Render Symbiote Metamorphosis (Infestation Surge Form)
+      // Symbiote Metamorphosis
       if (symImg && symImg.complete && symImg.naturalWidth > 0 && infestProgress > 0.01) {
         const ratio = targetH / symImg.naturalHeight;
         const sw = symImg.naturalWidth * ratio;
@@ -543,7 +517,6 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         ctx.rotate(heroTilt);
         ctx.globalAlpha = infestProgress;
 
-        // Visceral Obsidian Aura
         ctx.shadowColor = '#A855F7';
         ctx.shadowBlur = 45;
 
@@ -618,8 +591,7 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
       if (spiderSenseActive) {
         ctx.save();
         ctx.translate(centerX + heroParallaxX, centerY - 60 + heroParallaxY);
-        const waveCount = 3;
-        for (let r = 1; r <= waveCount; r++) {
+        for (let r = 1; r <= 3; r++) {
           const radius = r * 55 + Math.sin(time * 12 + r) * 12;
           ctx.beginPath();
           ctx.arc(0, 0, radius, 0, Math.PI * 2);
@@ -632,14 +604,13 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         ctx.restore();
       }
 
-      // 5. SIMULATE & DRAW PHYSICAL ELASTIC WEB STRANDS
+      // 5. PHYSICAL ELASTIC WEB STRANDS
       for (let i = websRef.current.length - 1; i >= 0; i--) {
         const web = websRef.current[i];
         web.life--;
         web.progress = Math.min(1, web.progress + 0.12);
         web.oscillation += web.frequency * 0.05;
 
-        // Quadratic bezier spline with spring physics
         const currEndX = web.startX + (web.targetX - web.startX) * web.progress;
         const currEndY = web.startY + (web.targetY - web.startY) * web.progress;
 
@@ -683,16 +654,16 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
         }
       }
 
-      // 6. UPDATE & DRAW VISCOUS SLIME PARTICLES
-      for (let p = slimeParticlesRef.current.length - 1; p >= 0; p--) {
-        const pt = slimeParticlesRef.current[p];
+      // 6. VISCOUS SLIME PARTICLES
+      for (let p = particlesRef.current.length - 1; p >= 0; p--) {
+        const pt = particlesRef.current[p];
         pt.x += pt.vx;
         pt.y += pt.vy;
-        pt.vy += 0.2; // gravity
+        pt.vy += 0.2;
         pt.alpha -= 0.02;
 
         if (pt.alpha <= 0) {
-          slimeParticlesRef.current.splice(p, 1);
+          particlesRef.current.splice(p, 1);
           continue;
         }
 
@@ -717,193 +688,196 @@ export const SpiderNexusStage: React.FC<SpiderNexusStageProps> = ({
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
     };
-  }, [
-    hero.accentColor,
-    hero.primaryColor,
-    infestProgress,
-    isSlowMo,
-    isSymbioteSurge,
-    spiderSenseActive,
-  ]);
+  }, [hero.accentColor, hero.primaryColor, infestProgress, isSlowMo, isSymbioteSurge, spiderSenseActive]);
 
   return (
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
-      className="relative w-full h-[90vh] min-h-[640px] bg-[#070913] rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] select-none"
+      className="relative w-full h-[90vh] min-h-[640px] bg-[#070913] rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.8)] select-none flex flex-col justify-between"
     >
       {/* Interactive WebGL / Canvas Stage */}
       <canvas
         ref={canvasRef}
-        onClick={handleShootWeb}
-        className="w-full h-full block cursor-crosshair relative z-10"
+        onClick={handleCanvasClick}
+        className="absolute inset-0 w-full h-full block cursor-crosshair z-10"
       />
 
-      {/* Loading Synchronization Overlay */}
-      {!imagesLoaded && (
+      {/* Synchronization Overlay */}
+      {!isLoaded && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none">
           <div className="flex items-center space-x-2 text-xs font-mono text-zinc-400">
             <span className="w-2 h-2 rounded-full bg-hero-primary animate-ping" />
-            <span>SYNCHRONIZING DIMENSIONAL AVATAR...</span>
+            <span>SYNCHRONIZING HERO DIMENSION...</span>
           </div>
         </div>
       )}
 
-      {/* Dynamic Comic Exclamations ("THWIP!", "WHAM!") */}
+      {/* Dynamic Comic Bursts ("THWIP!", "WHIP!") */}
       <div className="absolute inset-0 pointer-events-none z-20">
-        {activeExclamations.map((ex) => (
+        {bursts.map((b) => (
           <div
-            key={ex.id}
+            key={b.id}
             style={{
-              left: `${ex.x}px`,
-              top: `${ex.y}px`,
-              transform: `translate(-50%, -50%) rotate(${ex.rotation}rad) scale(${ex.scale})`,
-              color: ex.color,
+              left: `${b.x}px`,
+              top: `${b.y}px`,
+              transform: `translate(-50%, -50%) rotate(${b.rotation}rad) scale(${b.scale})`,
+              color: b.color,
               textShadow: '0 0 20px rgba(0,0,0,0.9), 3px 3px 0 #000, -2px -2px 0 #000',
             }}
             className="absolute font-comic text-4xl sm:text-5xl font-extrabold tracking-wider transition-all duration-300 animate-bounce pointer-events-none"
           >
-            {ex.text}
+            {b.text}
           </div>
         ))}
       </div>
 
-      {/* TOP HUD: Hero Identity & Dimension Banner */}
-      <div className="absolute top-6 left-6 z-30 pointer-events-none flex flex-col gap-1 max-w-md">
-        <div className="inline-flex items-center space-x-2 bg-black/80 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full text-[11px] font-mono text-zinc-300 shadow-xl self-start">
-          <span
-            className="w-2.5 h-2.5 rounded-full animate-ping"
-            style={{ backgroundColor: isSymbioteSurge ? '#A855F7' : hero.primaryColor }}
-          />
-          <span className="font-bold text-white uppercase">{hero.earthDesignation}</span>
-          <span className="text-zinc-500">//</span>
-          <span className="text-hero-primary uppercase">{hero.badge}</span>
+      {/* TOP HUD: Hero Identity */}
+      <div className="relative z-30 pt-24 md:pt-28 px-6 sm:px-10 flex items-start justify-between pointer-events-none">
+        <div className="pointer-events-auto bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl p-4 max-w-md shadow-2xl">
+          <div className="flex items-center space-x-2 text-[10px] font-mono uppercase tracking-widest text-zinc-400 mb-1">
+            <span
+              className="w-2 h-2 rounded-full animate-ping"
+              style={{ backgroundColor: isSymbioteSurge ? '#A855F7' : hero.primaryColor }}
+            />
+            <span>{hero.earthDesignation} // {hero.badge}</span>
+          </div>
+          <h1 className="font-comic text-4xl sm:text-6xl text-white tracking-wide leading-none">
+            {isSymbioteSurge ? hero.symbioteVariantName : hero.alias}
+          </h1>
+          <p className="text-xs text-zinc-300 font-sans mt-1.5 font-semibold">
+            {hero.name} · {hero.tagline}
+          </p>
         </div>
 
-        <h1 className="font-comic text-4xl sm:text-6xl text-white tracking-wide leading-none mt-2 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-          {isSymbioteSurge ? hero.symbioteVariantName : hero.alias}
-        </h1>
-
-        <p className="text-xs sm:text-sm font-sans font-semibold text-zinc-300 drop-shadow-md">
-          {hero.name} · {hero.tagline}
-        </p>
-      </div>
-
-      {/* TOP RIGHT ACTION CONTROLS */}
-      <div className="absolute top-6 right-6 z-30 flex items-center space-x-2.5">
-        {/* Spider-Sense Radar Trigger */}
-        <button
-          onClick={triggerSpiderSense}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl bg-black/80 hover:bg-black border border-yellow-500/40 text-yellow-300 font-mono text-xs font-bold transition shadow-[0_0_20px_rgba(250,204,21,0.3)] active:scale-95"
-        >
-          <Radio className="w-4 h-4 animate-pulse text-yellow-400" />
-          <span className="hidden sm:inline">SPIDER-SENSE</span>
-        </button>
-
-        {/* Slow-Mo Time Dilation */}
-        <button
-          onClick={() => {
-            soundEngine.playHudClick();
-            setIsSlowMo(!isSlowMo);
-          }}
-          className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl border text-xs font-mono font-bold transition active:scale-95 ${
-            isSlowMo
-              ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)]'
-              : 'bg-black/80 hover:bg-black border-white/20 text-zinc-300 hover:text-white'
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="hidden sm:inline">{isSlowMo ? '15% SLOW-MO' : 'BULLET TIME'}</span>
-        </button>
-
-        {/* Multiverse Reality Selector Warp */}
-        <button
-          onClick={onOpenSelector}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-mono text-xs font-bold transition active:scale-95 shadow-lg"
-        >
-          <Compass className="w-4 h-4 text-hero-accent" />
-          <span>WARP REALITY</span>
-        </button>
-
-        {/* METAMORPHOSIS SURGE BUTTON */}
-        <button
-          onClick={onToggleSymbiote}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-2xl font-mono text-xs font-black transition-all active:scale-95 border-2 shadow-2xl ${
-            isSymbioteSurge
-              ? 'bg-purple-950 text-purple-200 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.7)]'
-              : 'bg-gradient-to-r from-purple-900 to-black text-white border-purple-500/60 hover:border-purple-400 hover:shadow-[0_0_25px_rgba(168,85,247,0.5)]'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4 text-purple-400 animate-pulse" />
-          <span>{isSymbioteSurge ? 'PURGE SYMBIOTE' : 'INFEST SUIT'}</span>
-        </button>
-      </div>
-
-      {/* BOTTOM LEFT: INTERACTIVE WEB-SLINGER & TARGETING HUD */}
-      <div className="absolute bottom-6 left-6 z-30 bg-black/85 backdrop-blur-md border border-white/15 rounded-2xl p-4 shadow-2xl max-w-sm">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
-            <Crosshair className="w-3.5 h-3.5 text-hero-primary" />
-            <span>INTERACTIVE WEB-SHOOTER HUD</span>
-          </span>
+        {/* Top Right Action Quick Controls */}
+        <div className="pointer-events-auto flex items-center space-x-2">
+          {/* Spider-Sense Radar Trigger */}
           <button
-            onClick={handleReloadWeb}
-            title="Reload Cartridges"
-            className="text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 transition"
+            onClick={triggerSpiderSense}
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl bg-black/80 hover:bg-black border border-yellow-500/40 text-yellow-300 font-mono text-xs font-bold transition shadow-lg active:scale-95"
           >
-            <RotateCcw className="w-3 h-3 text-cyan-400" /> RELOAD
+            <Radio className="w-4 h-4 text-yellow-400 animate-pulse" />
+            <span className="hidden sm:inline">SPIDER-SENSE</span>
+          </button>
+
+          {/* Slow-Mo Time Dilation */}
+          <button
+            onClick={() => {
+              soundEngine.playHudClick();
+              setIsSlowMo(!isSlowMo);
+            }}
+            className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-2xl border text-xs font-mono font-bold transition active:scale-95 ${
+              isSlowMo
+                ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)]'
+                : 'bg-black/80 hover:bg-black border-white/20 text-zinc-300 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">{isSlowMo ? '15% SLOW-MO' : 'BULLET TIME'}</span>
           </button>
         </div>
-
-        {/* Web Ammo Bar */}
-        <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden mb-2">
-          <div
-            className="h-full transition-all duration-300"
-            style={{
-              width: `${webAmmo}%`,
-              backgroundColor: isSymbioteSurge ? '#A855F7' : hero.accentColor || '#00B4D8',
-            }}
-          />
-        </div>
-
-        <p className="text-xs font-mono text-zinc-300 leading-snug">
-          {isSymbioteSurge ? (
-            <span className="text-purple-300">
-              Living biomass active! Click anywhere to whip crushing black tendrils.
-            </span>
-          ) : (
-            <span>Click or drag anywhere across the screen to shoot elastic web anchors!</span>
-          )}
-        </p>
       </div>
 
-      {/* BOTTOM RIGHT: CATHEDRAL SONIC TUNING FORK (SYMBIOTE PURGE WEAPON) */}
-      <div className="absolute bottom-6 right-6 z-30 bg-black/85 backdrop-blur-md border border-white/15 rounded-2xl p-4 shadow-2xl max-w-xs flex flex-col gap-2.5">
-        <div className="flex items-center justify-between text-xs font-mono">
-          <span className="text-zinc-400 flex items-center gap-1.5">
-            <Volume2 className="w-3.5 h-3.5 text-yellow-400" />
-            <span>ACOUSTIC RESONANCE:</span>
-          </span>
-          <span className="text-yellow-400 font-bold">{sonicTuningFreq} Hz</span>
+      {/* BOTTOM HUD: Web Shooter Ammo & Cathedral Bell Purge */}
+      <div className="relative z-30 pb-6 px-6 sm:px-10 flex flex-wrap items-end justify-between gap-4 pointer-events-none">
+        {/* Left: Web-Shooter Ammo Gauge */}
+        <div className="pointer-events-auto bg-black/85 backdrop-blur-md border border-white/15 rounded-2xl p-4 shadow-2xl max-w-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
+              <Crosshair className="w-3.5 h-3.5 text-hero-primary" />
+              <span>INTERACTIVE WEB-SHOOTER HUD</span>
+            </span>
+            <button
+              onClick={() => {
+                soundEngine.playTensileSnap();
+                setWebAmmo(100);
+              }}
+              title="Reload Cartridges"
+              className="text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 transition"
+            >
+              <RotateCcw className="w-3 h-3 text-cyan-400" /> RELOAD
+            </button>
+          </div>
+
+          <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full transition-all duration-300"
+              style={{
+                width: `${webAmmo}%`,
+                backgroundColor: isSymbioteSurge ? '#A855F7' : hero.accentColor || '#00B4D8',
+              }}
+            />
+          </div>
+
+          <p className="text-xs font-mono text-zinc-300 leading-snug">
+            {isSymbioteSurge ? (
+              <span className="text-purple-300">
+                Living biomass active! Click anywhere to whip crushing black tendrils.
+              </span>
+            ) : (
+              <span>Click or drag anywhere across the screen to shoot elastic web anchors!</span>
+            )}
+          </p>
         </div>
 
-        <input
-          type="range"
-          min="440"
-          max="1760"
-          step="40"
-          value={sonicTuningFreq}
-          onChange={(e) => setSonicTuningFreq(Number(e.target.value))}
-          className="w-full accent-yellow-400 cursor-pointer h-1.5 bg-white/10 rounded-lg"
-        />
+        {/* Center: Multiverse 8-Hero Quick Dial */}
+        <div className="pointer-events-auto bg-black/85 backdrop-blur-md border border-white/15 rounded-2xl p-2.5 shadow-2xl flex items-center gap-1.5 overflow-x-auto max-w-md">
+          {(Object.keys(SPIDER_HEROES) as SpiderHeroId[]).map((hId) => {
+            const h = SPIDER_HEROES[hId];
+            const isCurrent = hId === hero.id;
+            return (
+              <button
+                key={hId}
+                onClick={() => {
+                  soundEngine.playHeroSwitchDetailed(hId, isSymbioteSurge);
+                  onSelectHero(hId);
+                }}
+                title={`${h.alias} (${h.earthDesignation})`}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition flex items-center space-x-1.5 active:scale-95 ${
+                  isCurrent
+                    ? 'bg-white/20 border-white text-white shadow-lg'
+                    : 'bg-black/50 border-white/10 text-zinc-400 hover:text-white hover:border-white/25'
+                }`}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: h.primaryColor }}
+                />
+                <span className="text-[11px]">{h.earthDesignation}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        <button
-          onClick={triggerSonicPurge}
-          className="w-full py-2 px-3 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 font-mono text-xs font-bold transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-md"
-        >
-          <Flame className="w-3.5 h-3.5 text-yellow-400" />
-          <span>STRIKE SONIC CATHEDRAL BELL</span>
-        </button>
+        {/* Right: Cathedral Sonic Tuning Bell */}
+        <div className="pointer-events-auto bg-black/85 backdrop-blur-md border border-white/15 rounded-2xl p-4 shadow-2xl max-w-xs flex flex-col gap-2.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-zinc-400 flex items-center gap-1.5">
+              <Volume2 className="w-3.5 h-3.5 text-yellow-400" />
+              <span>ACOUSTIC RESONANCE:</span>
+            </span>
+            <span className="text-yellow-400 font-bold">{sonicFreq} Hz</span>
+          </div>
+
+          <input
+            type="range"
+            min="440"
+            max="1760"
+            step="40"
+            value={sonicFreq}
+            onChange={(e) => setSonicFreq(Number(e.target.value))}
+            className="w-full accent-yellow-400 cursor-pointer h-1.5 bg-white/10 rounded-lg"
+          />
+
+          <button
+            onClick={triggerSonicPurge}
+            className="w-full py-2 px-3 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 font-mono text-xs font-bold transition flex items-center justify-center space-x-1.5 active:scale-95 shadow-md"
+          >
+            <Flame className="w-3.5 h-3.5 text-yellow-400" />
+            <span>STRIKE SONIC CATHEDRAL BELL</span>
+          </button>
+        </div>
       </div>
     </div>
   );
