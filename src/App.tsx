@@ -4,32 +4,23 @@ import { SpiderHeroId } from './types';
 import { SPIDER_HEROES, SPIDER_HERO_LIST } from './data/spiderHeroes';
 import { soundEngine } from './services/soundEngine';
 
-// Components
+// Core UI Components
 import { SpiderNavbar } from './components/ui/SpiderNavbar';
 import { MultiverseSelectorModal } from './components/ui/MultiverseSelectorModal';
 import { HeroTransitionCurtain } from './components/ui/HeroTransitionCurtain';
 import { BackgroundParticles } from './components/ui/BackgroundParticles';
-import { SpiderSuitDiagnostics } from './components/spiderman/SpiderSuitDiagnostics';
-import { MultiverseMap } from './components/spiderman/MultiverseMap';
-import { MultiverseCrisisArena } from './components/spiderman/MultiverseCrisisArena';
-import { CanonEventTerminal } from './components/spiderman/CanonEventTerminal';
 import { MultiverseActionDeck } from './components/ui/MultiverseActionDeck';
 
-// Dedicated Hero Experiences
-import { PeterParkerExperience } from './components/heroes/PeterParkerExperience';
-import { MilesMoralesExperience } from './components/heroes/MilesMoralesExperience';
-import { SpiderGwenExperience } from './components/heroes/SpiderGwenExperience';
-import { Spider2099Experience } from './components/heroes/Spider2099Experience';
-import { SpiderNoirExperience } from './components/heroes/SpiderNoirExperience';
-import { VenomSymbioteExperience } from './components/heroes/VenomSymbioteExperience';
-import { CarnageExperience } from './components/heroes/CarnageExperience';
-import { SpiderPunkExperience } from './components/heroes/SpiderPunkExperience';
+// Flagship New Experience Components
+import { SpiderNexusStage } from './components/spiderman/SpiderNexusStage';
+import { MultiverseHeroDeck } from './components/spiderman/MultiverseHeroDeck';
+import { SkylineFlightScroller } from './components/spiderman/SkylineFlightScroller';
+import { MultiverseCrisisArena } from './components/spiderman/MultiverseCrisisArena';
+import { MultiverseCosmicWeb } from './components/spiderman/MultiverseCosmicWeb';
+import { CanonEventTerminal } from './components/spiderman/CanonEventTerminal';
+import { SpiderSuitDiagnostics } from './components/spiderman/SpiderSuitDiagnostics';
 
-import {
-  ArrowUp,
-  Globe,
-  CheckCircle2,
-} from 'lucide-react';
+import { ArrowUp, Globe, CheckCircle2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeHeroId, setActiveHeroId] = useState<SpiderHeroId>('spiderman');
@@ -40,7 +31,7 @@ export const App: React.FC = () => {
 
   const activeHero = SPIDER_HEROES[activeHeroId] || SPIDER_HEROES.spiderman;
 
-  // Sync data-hero and data-symbiote on document.documentElement
+  // Sync data-hero and data-symbiote on document.documentElement for dynamic OKLCH tokens
   useEffect(() => {
     document.documentElement.setAttribute('data-hero', activeHeroId);
     document.documentElement.setAttribute('data-symbiote', isSymbioteSurge ? 'true' : 'false');
@@ -134,76 +125,39 @@ export const App: React.FC = () => {
         isSymbioteSurge={isSymbioteSurge}
       />
 
-      {/* MAIN SPIDER-VERSE SCROLLYTELLING JOURNEY */}
-      <main key={`${activeHeroId}-${isSymbioteSurge}`}>
-        {/* DEDICATED BESPOKE CHARACTER EXPERIENCE (SCROLLYTELLING + INTERACTIVE LAB) */}
-        {activeHeroId === 'spiderman' ? (
-          <PeterParkerExperience
+      {/* MAIN SPIDER-VERSE SCROLLYTELLING ODYSSEY */}
+      <main key={`${activeHeroId}-${isSymbioteSurge}`} className="relative z-10 pt-24 pb-20">
+        {/* CHAPTER 1: THE SPIDER-NEXUS APEX (Full-Figure Character Stage & Living Symbiote Infestation) */}
+        <section className="px-4 sm:px-8 max-w-7xl mx-auto mb-16">
+          <SpiderNexusStage
             hero={activeHero}
             isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
             onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : activeHeroId === 'miles' ? (
-          <MilesMoralesExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
             onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
+            onSelectHero={handleHeroSelect}
           />
-        ) : activeHeroId === 'gwen' ? (
-          <SpiderGwenExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : activeHeroId === 'spider2099' ? (
-          <Spider2099Experience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : activeHeroId === 'spidernoir' ? (
-          <SpiderNoirExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : activeHeroId === 'venom' ? (
-          <VenomSymbioteExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : activeHeroId === 'carnage' ? (
-          <CarnageExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : activeHeroId === 'spiderpunk' ? (
-          <SpiderPunkExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        ) : (
-          <PeterParkerExperience
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-            onOpenSelector={() => setIsMultiverseModalOpen(true)}
-            onToggleSymbiote={handleToggleSymbioteSurge}
-          />
-        )}
+        </section>
 
-        {/* CHAPTER 2: CANON EVENT COLLISION & MULTIVERSE CRISIS ARENA */}
-        <section id="crisis-arena-section" className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
+        {/* CHAPTER 2: MULTIVERSE HERO WORKSHOP & ARSENAL */}
+        <section id="workshop-section" className="px-4 sm:px-8 max-w-7xl mx-auto mb-20">
+          <MultiverseHeroDeck
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+            onToggleSymbiote={handleToggleSymbioteSurge}
+            onSelectHero={handleHeroSelect}
+          />
+        </section>
+
+        {/* CHAPTER 3: SKYLINE FLIGHT SCROLLER (Cinematic Rooftop Perch to Wall-Stick) */}
+        <section className="relative w-full mb-20">
+          <SkylineFlightScroller
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+          />
+        </section>
+
+        {/* CHAPTER 4: MULTIVERSE CRISIS COMBAT ARENA (Arcade Boss Showdown) */}
+        <section id="crisis-arena-section" className="px-4 sm:px-8 max-w-7xl mx-auto mb-20">
           <MultiverseCrisisArena
             playerHero={activeHero}
             isSymbioteSurge={isSymbioteSurge}
@@ -211,30 +165,30 @@ export const App: React.FC = () => {
           />
         </section>
 
-        {/* CHAPTER 3: SPIDER-SOCIETY CANON EVENT TIMELINE TERMINAL */}
-        <section id="canon-terminal-section" className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
-          <CanonEventTerminal
-            hero={activeHero}
-            isSymbioteSurge={isSymbioteSurge}
-          />
-        </section>
-
-        {/* CHAPTER 4: Biometric & Technical Suit Diagnostics */}
-        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
-          <SpiderSuitDiagnostics hero={activeHero} isSymbioteSurge={isSymbioteSurge} />
-        </section>
-
-        {/* CHAPTER 5: The Web of Life & Destiny (Multiverse Cosmic Map) */}
-        <section className="relative z-30 py-16 px-4 sm:px-8 max-w-7xl mx-auto">
-          <MultiverseMap
+        {/* CHAPTER 5: THE WEB OF LIFE & DESTINY (3D Cosmic Three.js Constellation) */}
+        <section id="cosmic-web-section" className="px-4 sm:px-8 max-w-7xl mx-auto mb-20">
+          <MultiverseCosmicWeb
             currentHeroId={activeHeroId}
             onSelectHero={handleHeroSelect}
             isSymbioteSurge={isSymbioteSurge}
           />
         </section>
 
-        {/* CHAPTER 6: Multiverse Spider-Roster Console Grid */}
-        <section className="relative z-30 py-24 px-6 md:px-12 bg-[#060810] border-t border-white/10">
+        {/* CHAPTER 6: SPIDER-SOCIETY CANON EVENT TIMELINE TERMINAL */}
+        <section id="canon-terminal-section" className="px-4 sm:px-8 max-w-7xl mx-auto mb-20">
+          <CanonEventTerminal
+            hero={activeHero}
+            isSymbioteSurge={isSymbioteSurge}
+          />
+        </section>
+
+        {/* CHAPTER 7: BIOMETRIC & TECHNICAL SUIT DIAGNOSTICS */}
+        <section className="px-4 sm:px-8 max-w-7xl mx-auto mb-20">
+          <SpiderSuitDiagnostics hero={activeHero} isSymbioteSurge={isSymbioteSurge} />
+        </section>
+
+        {/* CHAPTER 8: MULTIVERSE SPIDER-ROSTER CONSOLE GRID */}
+        <section className="py-24 px-6 md:px-12 bg-[#060810] border-t border-white/10">
           <div className="max-w-7xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-16">
               <div className="inline-flex items-center space-x-2 bg-white/5 border border-white/10 text-hero-primary font-mono text-xs px-3.5 py-1.5 rounded-full mb-3 shadow-md">
@@ -317,7 +271,7 @@ export const App: React.FC = () => {
                 <span>SPIDER-VERSE &amp; SYMBIOTE NEXUS // EARTH-616 &amp; MULTIVERSE</span>
               </div>
               <p className="max-w-xl text-xs md:text-sm leading-relaxed text-zinc-400 font-sans">
-                High-impact Spider-Man &amp; Symbiote interactive scrollytelling universe powered by React 19, Lenis smooth inertia scrolling, procedural Web Audio synthesis, and dynamic Canvas 2D organic fluid tendril mechanics.
+                Next-generation Spider-Man &amp; Symbiote interactive experience powered by React 19, Three.js 3D Web of Destiny, Lenis smooth scrolling, procedural Web Audio synthesis, and real-time physical elastic web and organic Klyntar tendril mechanics.
               </p>
             </div>
 
