@@ -1,38 +1,63 @@
 import React, { useEffect, useState } from 'react';
 import Lenis from 'lenis';
-import { SpiderHeroId } from './types';
-import { SPIDER_HEROES } from './data/spiderHeroes';
+import { MarvelHeroId } from './types';
+import { MARVEL_HEROES } from './data/marvelHeroes';
 import { soundEngine } from './services/soundEngine';
 
-// Rebuilt Flagship Components
-import { SpiderNavbar } from './components/SpiderNavbar';
-import { HeroStage } from './components/HeroStage';
-import { HeroWorkbench } from './components/HeroWorkbench';
-import { CosmicWeb3D } from './components/CosmicWeb3D';
-import { CombatArena } from './components/CombatArena';
-import { MultiverseModal } from './components/MultiverseModal';
-import { AudioDock } from './components/AudioDock';
+// Apple-Grade Cinematic Scrollytelling Components
+import { CinematicCanvasSequencer } from './components/scrollytelling/CinematicCanvasSequencer';
+import { HeroInteractiveSystems } from './components/scrollytelling/HeroInteractiveSystems';
 
-import { ArrowUp, Globe, Shield } from 'lucide-react';
+// UI Components
+import { Navbar } from './components/ui/Navbar';
+import { HeroSelectorModal } from './components/ui/HeroSelectorModal';
+import { HeroTransitionCurtain } from './components/ui/HeroTransitionCurtain';
+
+import { ArrowUp, Compass, Shield } from 'lucide-react';
+
+const HERO_IMAGES: Record<MarvelHeroId, string[]> = {
+  ironman: [
+    '/assets/ironman_hero.jpg',
+    '/assets/ironman_flight.jpg',
+    '/assets/ironman_unibeam.jpg',
+  ],
+  spiderman: [
+    '/assets/spiderman_perch.jpg',
+    '/assets/spiderman_dive.jpg',
+    '/assets/spiderman_swing.jpg',
+  ],
+  captainamerica: [
+    '/assets/cap_hero.jpg',
+    '/assets/cap_shield_throw.jpg',
+  ],
+  thor: [
+    '/assets/thor_hero.jpg',
+    '/assets/thor_lightning.jpg',
+  ],
+  wolverine: [
+    '/assets/wolverine_hero.jpg',
+    '/assets/wolverine_berserker.jpg',
+  ],
+};
 
 export const App: React.FC = () => {
-  const [activeHeroId, setActiveHeroId] = useState<SpiderHeroId>('spiderman');
-  const [isSymbioteSurge, setIsSymbioteSurge] = useState(false);
-  const [isMultiverseModalOpen, setIsMultiverseModalOpen] = useState(false);
+  const [activeHeroId, setActiveHeroId] = useState<MarvelHeroId>('ironman');
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
+  const [transitionTarget, setTransitionTarget] = useState<MarvelHeroId | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const activeHero = SPIDER_HEROES[activeHeroId] || SPIDER_HEROES.spiderman;
+  const activeHero = MARVEL_HEROES[activeHeroId] || MARVEL_HEROES.ironman;
 
-  // Sync data-hero and data-symbiote on document.documentElement for dynamic OKLCH tokens & global styles
+  // Sync data-hero attribute on documentElement
   useEffect(() => {
     document.documentElement.setAttribute('data-hero', activeHeroId);
-    document.documentElement.setAttribute('data-symbiote', isSymbioteSurge ? 'true' : 'false');
-  }, [activeHeroId, isSymbioteSurge]);
+  }, [activeHeroId]);
 
   // Initialize Lenis smooth scroll
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.1,
+      duration: 1.15,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       smoothWheel: true,
@@ -45,7 +70,11 @@ export const App: React.FC = () => {
     requestAnimationFrame(raf);
 
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 600);
+      const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalScroll > 0) {
+        setScrollProgress(window.scrollY / totalScroll);
+      }
+      setShowScrollTop(window.scrollY > 500);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -61,108 +90,83 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleHeroSelect = (heroId: SpiderHeroId) => {
+  const handleHeroSelect = (heroId: MarvelHeroId) => {
     if (heroId === activeHeroId) return;
-    soundEngine.playHeroSwitchDetailed(heroId, isSymbioteSurge);
-    setActiveHeroId(heroId);
-  };
+    setTransitionTarget(heroId);
+    soundEngine.playHeroSwitch(heroId);
 
-  const handleToggleSymbioteSurge = () => {
-    const nextState = !isSymbioteSurge;
-    setIsSymbioteSurge(nextState);
+    setTimeout(() => {
+      setActiveHeroId(heroId);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 450);
 
-    if (nextState) {
-      soundEngine.playSymbioteRoar();
-    } else {
-      soundEngine.playSonicScreech(880);
-    }
+    setTimeout(() => {
+      setTransitionTarget(null);
+    }, 1100);
   };
 
   return (
-    <div className="relative min-h-screen bg-black text-white selection:bg-red-500 selection:text-white font-sans overflow-x-hidden">
-      {/* Dynamic Symbiote Global Vignette & Particle Grid */}
-      {isSymbioteSurge && (
-        <div className="fixed inset-0 pointer-events-none z-30 shadow-[inset_0_0_120px_rgba(220,38,38,0.45)] transition-all duration-700 animate-pulse" />
-      )}
-
-      {/* Multiverse Navigation Bar */}
-      <SpiderNavbar
-        activeHero={activeHero}
-        isSymbioteSurge={isSymbioteSurge}
-        onToggleSymbiote={handleToggleSymbioteSurge}
-        onOpenSelector={() => setIsMultiverseModalOpen(true)}
+    <div className="relative min-h-screen bg-black text-white selection:bg-red-600 selection:text-white font-sans overflow-x-hidden">
+      {/* Universal Floating Navbar */}
+      <Navbar
+        hero={activeHero}
+        scrollProgress={scrollProgress}
+        onOpenSelector={() => setIsSelectorOpen(true)}
       />
 
-      {/* Main Experience Stream */}
-      <main className="relative z-10 flex flex-col w-full">
-        {/* Section 1: 100vh Flagship Hero Stage (Full-figure, Physics Web Shoot, Living Tendrils, Cathedral Purge) */}
-        <HeroStage
+      {/* Cinematic Dimensional Transition Curtain */}
+      <HeroTransitionCurtain targetHeroId={transitionTarget} />
+
+      {/* Main Scrollytelling Experience Stream */}
+      <main key={activeHeroId} className="relative z-10 flex flex-col w-full">
+        {/* Section 1: Apple-Grade 300vh Cinematic Canvas Scrollytelling Sequence */}
+        <CinematicCanvasSequencer
           hero={activeHero}
-          isSymbioteSurge={isSymbioteSurge}
-          onToggleSymbiote={handleToggleSymbioteSurge}
-          onSelectHero={handleHeroSelect}
+          imagePaths={HERO_IMAGES[activeHeroId]}
         />
 
-        {/* Section 2: Interactive Multiverse Hero Workbench (Peter, Miles, Gwen, 2099, Noir, Venom, Punk) */}
-        <HeroWorkbench
-          hero={activeHero}
-          isSymbioteSurge={isSymbioteSurge}
-          onToggleSymbiote={handleToggleSymbioteSurge}
-        />
-
-        {/* Section 3: WebGL 3D Web of Life & Destiny (Three.js Cosmic Constellation) */}
-        <CosmicWeb3D
-          currentHeroId={activeHeroId}
-          onSelectHero={handleHeroSelect}
-          isSymbioteSurge={isSymbioteSurge}
-        />
-
-        {/* Section 4: Multiverse Crisis Combat Arena (Spot, Kingpin, Miguel, Knull) */}
-        <CombatArena
-          activeHeroId={activeHeroId}
-          isSymbioteSurge={isSymbioteSurge}
-        />
+        {/* Section 2: Interactive Weapons Lab & Diagnostics System */}
+        <HeroInteractiveSystems hero={activeHero} />
       </main>
 
-      {/* Multiverse Footer */}
-      <footer className="relative z-10 border-t border-zinc-800 bg-zinc-950 py-12 px-6 md:px-12 text-zinc-400">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/10 bg-zinc-950 py-16 px-6 md:px-12 text-zinc-400">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
             <div className="flex items-center gap-2">
               <span className="text-xl font-black text-white tracking-widest uppercase">
-                SPIDER-VERSE <span className="text-red-500">&amp;</span> SYMBIOTE NEXUS
+                MARVEL <span className="text-red-600">CINEMATIC</span> UNIVERSE
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                {activeHero.earthDesignation} // {activeHero.universe.toUpperCase()}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/10">
+                EARTH-616 // LEGENDS
               </span>
             </div>
             <p className="text-xs text-zinc-500 mt-1 max-w-md">
-              A high-impact interactive scrollytelling web experience powered by Web Audio API, Three.js WebGL, and organic Klyntar fluid physics.
+              An Apple-grade cinematic interactive scrollytelling web experience featuring Iron Man, Spider-Man, Captain America, Thor, and Wolverine.
             </p>
           </div>
 
-          {/* Quick Multiverse Totems */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsMultiverseModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition font-mono text-xs uppercase"
+              onClick={() => setIsSelectorOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white border border-white/15 transition font-mono text-xs uppercase"
             >
-              <Globe className="w-3.5 h-3.5 text-red-500" />
-              <span>Multiverse Matrix</span>
+              <Compass className="w-3.5 h-3.5 text-red-500" />
+              <span>CHOOSE HERO</span>
             </button>
             <div className="flex items-center gap-1.5 text-xs font-mono text-zinc-500">
               <Shield className="w-3.5 h-3.5 text-blue-400" />
-              <span>Canon Protected</span>
+              <span>EARTH-616 SECURED</span>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-600 gap-4">
+        <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-600 gap-4">
           <div>
-            Built with React 19, Vite, Three.js, Tailwind CSS &amp; Lenis. No generic AI templates.
+            Crafted with React 19, Vite, Tailwind CSS, Lenis &amp; Web Audio API.
           </div>
-          <div className="flex items-center gap-1">
-            <span>&quot;Anyone can wear the mask.&quot;</span>
+          <div>
+            &quot;Part of the journey is the end.&quot;
           </div>
         </div>
       </footer>
@@ -172,23 +176,21 @@ export const App: React.FC = () => {
         <button
           onClick={scrollToTop}
           aria-label="Scroll to top"
-          className="fixed bottom-20 right-5 z-40 p-3 rounded-full bg-zinc-900/90 border border-zinc-700 text-zinc-300 hover:text-white hover:bg-red-600 hover:border-red-500 transition-all duration-300 shadow-xl backdrop-blur-md group"
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-zinc-900/90 border border-white/15 text-zinc-300 hover:text-white hover:bg-red-600 hover:border-red-500 transition-all duration-300 shadow-2xl backdrop-blur-md group"
         >
           <ArrowUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
         </button>
       )}
 
-      {/* Floating Audio Dock with Procedural OST & Frequency Visualizer */}
-      <AudioDock activeHeroId={activeHeroId} />
-
-      {/* Fullscreen Multiverse Reality Selector Modal */}
-      <MultiverseModal
-        isOpen={isMultiverseModalOpen}
-        onClose={() => setIsMultiverseModalOpen(false)}
+      {/* Fullscreen Hero Selector Modal */}
+      <HeroSelectorModal
+        isOpen={isSelectorOpen}
+        onClose={() => setIsSelectorOpen(false)}
         activeHeroId={activeHeroId}
         onSelectHero={handleHeroSelect}
       />
     </div>
   );
 };
+
 export default App;
