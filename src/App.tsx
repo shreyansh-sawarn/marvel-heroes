@@ -29,14 +29,17 @@ const HERO_IMAGES: Record<MarvelHeroId, string[]> = {
   captainamerica: [
     '/assets/cap_hero.jpg',
     '/assets/cap_shield_throw.jpg',
+    '/assets/cap_worthy.jpg',
   ],
   thor: [
     '/assets/thor_hero.jpg',
     '/assets/thor_lightning.jpg',
+    '/assets/thor_bifrost.jpg',
   ],
   wolverine: [
     '/assets/wolverine_hero.jpg',
     '/assets/wolverine_berserker.jpg',
+    '/assets/wolverine_rage.jpg',
   ],
 };
 
@@ -106,7 +109,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-black text-white selection:bg-red-600 selection:text-white font-sans overflow-x-hidden">
+    <div className="relative min-h-screen bg-black text-white selection:bg-red-600 selection:text-white font-sans">
       {/* Universal Floating Navbar */}
       <Navbar
         hero={activeHero}

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { MarvelHeroMeta, MarvelHeroChapter } from '../../types';
-import { Activity, Sparkles, ChevronDown } from 'lucide-react';
+import { soundEngine } from '../../services/soundEngine';
+import { Activity, Sparkles, ChevronDown, Compass } from 'lucide-react';
 
 interface CinematicCanvasSequencerProps {
   hero: MarvelHeroMeta;
@@ -15,12 +16,13 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
 
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const lastCrossedChapterRef = useRef<number>(-1);
+  const speedLinesRef = useRef<{ x: number; y: number; length: number; speed: number; alpha: number }[]>([]);
 
   // Preload images for this hero
   useEffect(() => {
@@ -52,9 +54,18 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
         }
       };
     });
+
+    // Initialize speed lines
+    speedLinesRef.current = Array.from({ length: 30 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      length: Math.random() * 80 + 40,
+      speed: Math.random() * 15 + 10,
+      alpha: Math.random() * 0.4 + 0.1,
+    }));
   }, [imagePaths]);
 
-  // Subtle mouse parallax listener
+  // Mouse parallax tracking
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const normX = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -67,7 +78,7 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Apple-grade Canvas Rendering Loop
+  // Apple-grade Canvas Rendering Loop with Fluid Camera Choreography & Speed Lines
   const drawFrame = useCallback(
     (progress: number) => {
       const canvas = canvasRef.current;
@@ -96,24 +107,29 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
 
       const numScenes = images.length;
       const segment = 1 / Math.max(1, numScenes - 1);
-      const sceneIndex = Math.min(numScenes - 2, Math.floor(progress / segment));
+      const sceneIndex = Math.min(numScenes - 2, Math.max(0, Math.floor(progress / segment)));
       const subT = Math.max(0, Math.min(1, (progress - sceneIndex * segment) / segment));
 
       const imgA = images[sceneIndex] || images[0];
       const imgB = images[sceneIndex + 1] || imgA;
 
-      // Camera motion: zoom and parallax pan
-      const baseZoom = 1.0 + progress * 0.06;
-      const panX = mouseRef.current.x * 20 * dpr;
-      const panY = mouseRef.current.y * 12 * dpr;
+      // Dynamic Camera Motion: Continuous zoom from 1.0 to 1.18
+      const baseZoom = 1.0 + progress * 0.14;
+      // Camera pan tracks scroll journey + mouse parallax
+      const panX = mouseRef.current.x * 25 * dpr;
+      const panY = (-progress * 40 + mouseRef.current.y * 15) * dpr;
+      const rot = (mouseRef.current.x * 0.012) + (Math.sin(progress * Math.PI) * 0.015);
 
-      // Draw helper with object-fit: cover
-      const drawCover = (img: HTMLImageElement, alpha: number, scaleBoost = 1.0) => {
+      // Helper to draw image with object-fit: cover and 3D camera transforms
+      const drawCover = (img: HTMLImageElement, alpha: number, scaleMultiplier = 1.0) => {
         if (!img || alpha <= 0) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
 
-        const scale = baseZoom * scaleBoost;
+        ctx.translate(w / 2 + panX, h / 2 + panY);
+        ctx.rotate(rot);
+
+        const scale = baseZoom * scaleMultiplier;
         const imgAspect = img.naturalWidth / img.naturalHeight;
         const canvasAspect = w / h;
 
@@ -128,19 +144,43 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
           drawW = (h * imgAspect) * scale;
         }
 
-        const offsetX = (w - drawW) / 2 + panX;
-        const offsetY = (h - drawH) / 2 + panY;
-
-        ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
         ctx.restore();
       };
 
-      // Cross-fade between Scene A and Scene B
+      // Continuous cinematic cross-fade with smooth easing
       if (sceneIndex === numScenes - 1 || imgA === imgB) {
         drawCover(imgA, 1.0);
       } else {
-        drawCover(imgA, 1.0 - subT);
-        drawCover(imgB, subT, 1.01);
+        // Hermite smoothstep for butter-smooth transition
+        const easeBlend = subT * subT * (3 - 2 * subT);
+        drawCover(imgA, 1.0 - easeBlend);
+        drawCover(imgB, easeBlend, 1.01);
+      }
+
+      // Procedural High-Velocity Speed Lines (Active in Act 2 & 3)
+      if (progress > 0.28) {
+        const intensity = Math.min(1, (progress - 0.28) / 0.4);
+        ctx.save();
+        ctx.strokeStyle = hero.primaryColor;
+        ctx.lineWidth = 1.5 * dpr;
+        ctx.shadowColor = hero.primaryColor;
+        ctx.shadowBlur = 8;
+
+        speedLinesRef.current.forEach((line) => {
+          line.y += line.speed * (1 + intensity * 2);
+          if (line.y > h) {
+            line.y = -line.length;
+            line.x = Math.random() * w;
+          }
+
+          ctx.globalAlpha = line.alpha * intensity * 0.65;
+          ctx.beginPath();
+          ctx.moveTo(line.x, line.y);
+          ctx.lineTo(line.x, line.y + line.length);
+          ctx.stroke();
+        });
+        ctx.restore();
       }
 
       // Atmospheric Vignette & Contrast Grading
@@ -160,16 +200,16 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
       ctx.fillRect(0, 0, w, h);
 
       // Hero primary accent glow wash from bottom
-      const glow = ctx.createLinearGradient(0, h * 0.7, 0, h);
+      const glow = ctx.createLinearGradient(0, h * 0.68, 0, h);
       glow.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      glow.addColorStop(1, `${hero.primaryColor}25`);
+      glow.addColorStop(1, `${hero.primaryColor}28`);
       ctx.fillStyle = glow;
-      ctx.fillRect(0, h * 0.7, w, h * 0.3);
+      ctx.fillRect(0, h * 0.68, w, h * 0.32);
     },
     [hero.primaryColor]
   );
 
-  // Scroll listener tracking progression through 300vh section
+  // Scroll listener tracking progression through 450vh section
   useEffect(() => {
     let animId: number;
 
@@ -185,12 +225,15 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
       const progress = Math.min(1, Math.max(0, rawProgress));
       setScrollProgress(progress);
 
-      const numChapters = hero.chapters.length;
-      const chapterIdx = Math.min(
-        numChapters - 1,
-        Math.floor(progress * numChapters)
+      // Audio feedback when crossing chapter thresholds
+      const currentChapterIdx = Math.min(
+        hero.chapters.length - 1,
+        Math.floor(progress * hero.chapters.length)
       );
-      setActiveChapterIndex(chapterIdx);
+      if (currentChapterIdx !== lastCrossedChapterRef.current) {
+        lastCrossedChapterRef.current = currentChapterIdx;
+        soundEngine.playWhoosh(1.2);
+      }
     };
 
     const renderLoop = () => {
@@ -207,13 +250,37 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
     };
   }, [drawFrame, hero.chapters.length, scrollProgress]);
 
-  const activeChapter: MarvelHeroChapter =
-    hero.chapters[activeChapterIndex] || hero.chapters[0];
+  // Jump to specific chapter on click
+  const scrollToChapter = (index: number) => {
+    const el = containerRef.current;
+    if (!el) return;
+    soundEngine.playHudClick();
+    const totalScroll = el.offsetHeight - window.innerHeight;
+    const targetP = (index + 0.5) / hero.chapters.length;
+    const dest = el.offsetTop + totalScroll * targetP;
+    window.scrollTo({ top: dest, behavior: 'smooth' });
+  };
+
+  // Helper to compute individual chapter opacity and transform
+  const getChapterTransform = (index: number, total: number) => {
+    const center = (index + 0.5) / total;
+    const span = 1 / total;
+    const dist = Math.abs(scrollProgress - center);
+
+    // Fade in when within span, peak at center
+    const opacity = Math.max(0, Math.min(1, (span * 0.6 - dist) / (span * 0.35)));
+    // Float upward: +40px when entering, 0px at center, -40px when exiting
+    const translateY = (center - scrollProgress) * 120;
+    // Subtle scale
+    const scale = 1.0 - Math.abs(center - scrollProgress) * 0.12;
+
+    return { opacity, translateY, scale, isVisible: opacity > 0.01 };
+  };
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[320vh] bg-black text-white"
+      className="relative w-full h-[450vh] bg-black text-white"
     >
       {/* STICKY 100vh FULLSCREEN VIEWPORT */}
       <div className="sticky top-0 w-full h-screen overflow-hidden bg-black flex flex-col justify-between p-6 md:p-12 select-none">
@@ -241,79 +308,130 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
             </span>
           </div>
 
-          {/* Telemetry Capsule */}
-          <div className="flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl pointer-events-auto shadow-2xl">
-            <Activity className="w-4 h-4 text-emerald-400" />
+          {/* Dynamic Real-Time Telemetry Capsule */}
+          <div className="flex items-center gap-3 bg-black/70 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl pointer-events-auto shadow-2xl">
+            <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
             <div className="text-[11px] font-mono text-zinc-300">
-              <span className="text-zinc-500">{activeChapter.telemetry.labelA}: </span>
-              <span className="font-bold text-white">{activeChapter.telemetry.valueA}</span>
+              <span className="text-zinc-500">DYNAMIC TELEMETRY: </span>
+              <span className="font-bold text-white">
+                {Math.round(scrollProgress * 100)}% KINETIC DISCHARGE
+              </span>
             </div>
           </div>
         </div>
 
-        {/* CENTER EDITORIAL TYPOGRAPHY & STORYTELLING */}
-        <div className="relative z-10 max-w-4xl flex flex-col gap-6 pointer-events-none my-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-mono tracking-widest uppercase text-zinc-300 w-fit">
-            <Sparkles className="w-3.5 h-3.5" style={{ color: hero.primaryColor }} />
-            <span>{activeChapter.stageName}</span>
-          </div>
+        {/* CENTER EDITORIAL TYPOGRAPHY: SEPARATE INDEPENDENT CHAPTER OVERLAYS */}
+        <div className="relative z-10 max-w-4xl w-full my-auto pointer-events-none">
+          {hero.chapters.map((chapter: MarvelHeroChapter, idx: number) => {
+            const { opacity, translateY, scale, isVisible } = getChapterTransform(
+              idx,
+              hero.chapters.length
+            );
 
-          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none text-white whitespace-pre-line drop-shadow-2xl">
-            {activeChapter.title}
-          </h1>
+            if (!isVisible) return null;
 
-          <p className="text-zinc-300 text-sm sm:text-lg max-w-xl leading-relaxed drop-shadow-md">
-            {activeChapter.subtitle}
-          </p>
+            return (
+              <div
+                key={chapter.id}
+                style={{
+                  opacity,
+                  transform: `translateY(${translateY}px) scale(${scale})`,
+                  transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
+                }}
+                className="flex flex-col gap-6"
+              >
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-mono tracking-widest uppercase text-zinc-200 w-fit shadow-lg">
+                  <Sparkles className="w-3.5 h-3.5" style={{ color: hero.primaryColor }} />
+                  <span>{chapter.stageName}</span>
+                </div>
 
-          {/* Floating Quote Card */}
-          <div className="mt-2 bg-black/70 backdrop-blur-xl border border-white/10 p-5 rounded-3xl max-w-lg shadow-2xl pointer-events-auto">
-            <p className="text-sm md:text-base italic text-zinc-200 font-serif leading-snug">
-              {activeChapter.quote}
-            </p>
-            <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2 text-[11px] font-mono text-zinc-400 uppercase">
-              <span className="font-bold text-white">{activeChapter.quoteAuthor}</span>
-              <span style={{ color: hero.primaryColor }}>{activeChapter.quoteSource}</span>
-            </div>
-          </div>
+                <h1 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter leading-none text-white whitespace-pre-line drop-shadow-2xl">
+                  {chapter.title}
+                </h1>
+
+                <p className="text-zinc-300 text-sm sm:text-lg max-w-xl leading-relaxed drop-shadow-md">
+                  {chapter.subtitle}
+                </p>
+
+                {/* Floating Glass Quote Card */}
+                <div className="mt-2 bg-black/75 backdrop-blur-2xl border border-white/15 p-6 rounded-3xl max-w-lg shadow-2xl pointer-events-auto">
+                  <p className="text-sm md:text-base italic text-zinc-200 font-serif leading-snug">
+                    {chapter.quote}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-mono text-zinc-400 uppercase">
+                    <span className="font-bold text-white">{chapter.quoteAuthor}</span>
+                    <span style={{ color: hero.primaryColor }}>{chapter.quoteSource}</span>
+                  </div>
+                </div>
+
+                {/* Live Chapter Telemetry Readout */}
+                <div className="flex flex-wrap items-center gap-6 text-xs font-mono text-zinc-300 pt-2">
+                  <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+                    <span className="text-zinc-500">{chapter.telemetry.labelA}: </span>
+                    <strong className="text-white">{chapter.telemetry.valueA}</strong>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl">
+                    <span className="text-zinc-500">{chapter.telemetry.labelB}: </span>
+                    <strong className="text-white">{chapter.telemetry.valueB}</strong>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* BOTTOM HUD: Telemetry Ticker & Scroll Scrubber */}
-        <div className="relative z-10 flex flex-col gap-3 pointer-events-none pb-2">
-          {/* Secondary Telemetry Strip */}
-          <div className="hidden sm:flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1">
-            <div className="flex items-center gap-6">
-              <div>
-                <span className="text-zinc-600">{activeChapter.telemetry.labelB}: </span>
-                <span className="text-zinc-300 font-bold">{activeChapter.telemetry.valueB}</span>
-              </div>
-              <div>
-                <span className="text-zinc-600">{activeChapter.telemetry.labelC}: </span>
-                <span className="text-zinc-300 font-bold">{activeChapter.telemetry.valueC}</span>
-              </div>
+        {/* BOTTOM HUD: Interactive Chapter Navigation & Progress Scrubber */}
+        <div className="relative z-10 flex flex-col gap-3.5 pointer-events-none pb-2">
+          {/* Chapter Quick-Jump Buttons */}
+          <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 px-1 pointer-events-auto">
+            <div className="flex items-center gap-2">
+              {hero.chapters.map((ch, idx) => {
+                const isActive =
+                  Math.min(
+                    hero.chapters.length - 1,
+                    Math.floor(scrollProgress * hero.chapters.length)
+                  ) === idx;
+                return (
+                  <button
+                    key={ch.id}
+                    onClick={() => scrollToChapter(idx)}
+                    className={`px-3 py-1 rounded-lg border transition text-[11px] uppercase tracking-wider flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-white/20 text-white border-white/40 shadow-[0_0_12px_rgba(255,255,255,0.2)]'
+                        : 'bg-black/50 text-zinc-400 border-white/10 hover:text-white'
+                    }`}
+                  >
+                    <span>ACT 0{idx + 1}</span>
+                    <span className="hidden sm:inline opacity-70">· {ch.title.split('\n')[0]}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="flex items-center gap-2 text-zinc-400 animate-pulse">
+            <div className="flex items-center gap-2 text-zinc-400 animate-pulse hidden sm:flex">
               <span>Scroll to scrub</span>
               <ChevronDown className="w-3.5 h-3.5" />
             </div>
           </div>
 
           {/* Apple-style Progress Scrubber Bar */}
-          <div className="w-full h-1 bg-white/15 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-white/15 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-75"
               style={{
                 width: `${Math.round(scrollProgress * 100)}%`,
                 backgroundColor: hero.primaryColor,
-                boxShadow: `0 0 12px ${hero.primaryColor}`,
+                boxShadow: `0 0 16px ${hero.primaryColor}`,
               }}
             />
           </div>
 
           <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 uppercase tracking-widest px-1">
-            <span>{hero.alias} // CINEMATIC SCROLLYTELLING</span>
-            <span>{Math.round(scrollProgress * 100)}% PLAYBACK</span>
+            <span className="flex items-center gap-1.5">
+              <Compass className="w-3 h-3 text-red-500" />
+              <span>{hero.alias} // CINEMATIC SCROLLYTELLING EXPERIENCE</span>
+            </span>
+            <span>{Math.round(scrollProgress * 100)}% PLAYBACK PROGRESS</span>
           </div>
         </div>
 
