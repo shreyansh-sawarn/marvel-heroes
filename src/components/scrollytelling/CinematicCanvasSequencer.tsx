@@ -20,7 +20,7 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
   const [loadedCount, setLoadedCount] = useState(0);
 
   const imagesRef = useRef<HTMLImageElement[]>([]);
-  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const scrollProgressRef = useRef(0);
   const lastCrossedChapterRef = useRef<number>(-1);
   const speedLinesRef = useRef<{ x: number; y: number; length: number; speed: number; alpha: number }[]>([]);
 
@@ -65,19 +65,6 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
     }));
   }, [imagePaths]);
 
-  // Mouse parallax tracking
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const normX = (e.clientX / window.innerWidth - 0.5) * 2;
-      const normY = (e.clientY / window.innerHeight - 0.5) * 2;
-      mouseRef.current.targetX = normX;
-      mouseRef.current.targetY = normY;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
   // Apple-grade Canvas Rendering Loop with Fluid Camera Choreography & Speed Lines
   const drawFrame = useCallback(
     (progress: number) => {
@@ -101,10 +88,6 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
       const images = imagesRef.current.filter((img) => img && img.complete && img.naturalWidth > 0);
       if (images.length === 0) return;
 
-      // Mouse smoothing
-      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.08;
-      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.08;
-
       const numScenes = images.length;
       const segment = 1 / Math.max(1, numScenes - 1);
       const sceneIndex = Math.min(numScenes - 2, Math.max(0, Math.floor(progress / segment)));
@@ -113,21 +96,18 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
       const imgA = images[sceneIndex] || images[0];
       const imgB = images[sceneIndex + 1] || imgA;
 
-      // Dynamic Camera Motion: Continuous zoom from 1.0 to 1.18
+      // Dynamic Camera Motion: Continuous zoom from 1.0 to 1.14
       const baseZoom = 1.0 + progress * 0.14;
-      // Camera pan tracks scroll journey + mouse parallax
-      const panX = mouseRef.current.x * 25 * dpr;
-      const panY = (-progress * 40 + mouseRef.current.y * 15) * dpr;
-      const rot = (mouseRef.current.x * 0.012) + (Math.sin(progress * Math.PI) * 0.015);
+      // Camera pan tracks scroll journey smoothly with zero mouse jitter or tilt
+      const panY = -progress * 40 * dpr;
 
-      // Helper to draw image with object-fit: cover and 3D camera transforms
+      // Helper to draw image with object-fit: cover and stable camera transforms
       const drawCover = (img: HTMLImageElement, alpha: number, scaleMultiplier = 1.0) => {
         if (!img || alpha <= 0) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
 
-        ctx.translate(w / 2 + panX, h / 2 + panY);
-        ctx.rotate(rot);
+        ctx.translate(w / 2, h / 2 + panY);
 
         const scale = baseZoom * scaleMultiplier;
         const imgAspect = img.naturalWidth / img.naturalHeight;
@@ -223,6 +203,7 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
 
       const rawProgress = -rect.top / totalScroll;
       const progress = Math.min(1, Math.max(0, rawProgress));
+      scrollProgressRef.current = progress;
       setScrollProgress(progress);
 
       // Audio feedback when crossing chapter thresholds
@@ -237,18 +218,19 @@ export const CinematicCanvasSequencer: React.FC<CinematicCanvasSequencerProps> =
     };
 
     const renderLoop = () => {
-      drawFrame(scrollProgress);
+      drawFrame(scrollProgressRef.current);
       animId = requestAnimationFrame(renderLoop);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
     renderLoop();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animId);
     };
-  }, [drawFrame, hero.chapters.length, scrollProgress]);
+  }, [drawFrame, hero.chapters.length]);
 
   // Jump to specific chapter on click
   const scrollToChapter = (index: number) => {
